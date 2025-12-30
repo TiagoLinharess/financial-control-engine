@@ -16,6 +16,6 @@ func SendResponse[T any](w http.ResponseWriter, object T, status int) {
 	}
 }
 
-func SendError(w http.ResponseWriter, error errors.ErrorResponse, status int) {
-	SendResponse(w, error, status)
+func SendError(w http.ResponseWriter, error errors.ErrorResponse) {
+	SendResponse(w, error, error.Status)
 }
