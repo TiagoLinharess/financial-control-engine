@@ -1,8 +1,8 @@
 package services
 
 import (
-	models "financialcontrol/internal/models"
 	"financialcontrol/internal/models/errors"
+	"financialcontrol/internal/utils"
 	categoriesModels "financialcontrol/internal/v1/categories/models"
 	"net/http"
 	"time"
@@ -11,11 +11,17 @@ import (
 )
 
 func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request) (categoriesModels.CategoryResponse, errors.ErrorResponse) {
+	createCategoryRequest, err := utils.DecodeJson[categoriesModels.CategoryRequest](r)
+
+	if err != nil {
+		return categoriesModels.CategoryResponse{}, errors.NewErrorResponse(http.StatusUnprocessableEntity, []errors.ApiError{err})
+	}
+
 	return categoriesModels.CategoryResponse{
 		ID:              uuid.UUID{},
-		TransactionType: models.Income,
-		Name:            "name",
-		Icon:            "add",
+		TransactionType: createCategoryRequest.TransactionType,
+		Name:            createCategoryRequest.Name,
+		Icon:            createCategoryRequest.Icon,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}, errors.EmptyErrorResponse()
