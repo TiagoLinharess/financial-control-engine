@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    ports:
+      - ${FINANCIAL_CONTROL_DATABASE_PORT:-5432}:5432
+    environment:
+      POSTGRES_USER: ${FINANCIAL_CONTROL_DATABASE_USER}
+      POSTGRES_PASSWORD: ${FINANCIAL_CONTROL_DATABASE_PASSWORD}
+      POSTGRES_DB: ${FINANCIAL_CONTROL_DATABASE_NAME}
+    volumes:
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${FINANCIAL_CONTROL_DATABASE_USER} -d ${FINANCIAL_CONTROL_DATABASE_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db:
+    driver: local
