@@ -7,3 +7,7 @@ const (
 	Debit
 	Credit
 )
+
+func (t TransactionType) IsValid() bool {
+	return t == Income || t == Debit || t == Credit
+}

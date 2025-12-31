@@ -10,19 +10,19 @@ import (
 	"github.com/google/uuid"
 )
 
-func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request) (categoriesModels.CategoryResponse, errors.ErrorResponse) {
-	createCategoryRequest, err := utils.DecodeJson[categoriesModels.CategoryRequest](r)
+func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request) (categoriesModels.CategoryResponse, int, []errors.ApiError) {
+	request, errs := utils.DecodeValidJson[categoriesModels.CategoryRequest](r)
 
-	if err != nil {
-		return categoriesModels.CategoryResponse{}, errors.NewErrorResponse(http.StatusUnprocessableEntity, []errors.ApiError{err})
+	if len(errs) > 0 {
+		return categoriesModels.CategoryResponse{}, http.StatusBadRequest, errs
 	}
 
 	return categoriesModels.CategoryResponse{
 		ID:              uuid.UUID{},
-		TransactionType: createCategoryRequest.TransactionType,
-		Name:            createCategoryRequest.Name,
-		Icon:            createCategoryRequest.Icon,
+		TransactionType: *request.TransactionType,
+		Name:            request.Name,
+		Icon:            request.Icon,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
-	}, errors.EmptyErrorResponse()
+	}, http.StatusCreated, nil
 }

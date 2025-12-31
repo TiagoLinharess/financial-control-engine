@@ -15,28 +15,22 @@ func NewCategoriesController(service models.CategoriesService) CategoriesControl
 }
 
 func (c *CategoriesController) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	categoryResponse, err := c.service.CreateCategory(w, r)
-
-	if len(err.Errors) > 0 {
-		utils.SendError(w, err)
-		return
-	}
-
-	utils.SendResponse(w, categoryResponse, http.StatusCreated)
+	data, status, err := c.service.CreateCategory(w, r)
+	utils.SendResponse(w, data, status, err)
 }
 
 func (c *CategoriesController) ReadCategories(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK)
+	utils.SendResponse(w, "success", http.StatusOK, nil)
 }
 
 func (c *CategoriesController) ReadCategory(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK)
+	utils.SendResponse(w, "success", http.StatusOK, nil)
 }
 
 func (c *CategoriesController) UpdateCategory(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK)
+	utils.SendResponse(w, "success", http.StatusOK, nil)
 }
 
 func (c *CategoriesController) DeleteCategory(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK)
+	utils.SendResponse(w, "success", http.StatusOK, nil)
 }

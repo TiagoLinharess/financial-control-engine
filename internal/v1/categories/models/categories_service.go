@@ -6,5 +6,5 @@ import (
 )
 
 type CategoriesService interface {
-	CreateCategory(w http.ResponseWriter, r *http.Request) (CategoryResponse, errors.ErrorResponse)
+	CreateCategory(w http.ResponseWriter, r *http.Request) (CategoryResponse, int, []errors.ApiError)
 }
