@@ -27,7 +27,7 @@ func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request
 		Icon:            request.Icon,
 	}
 
-	category, errs := c.repository.CreateCategory(data)
+	category, errs := c.repository.CreateCategory(r.Context(), data)
 
 	if len(errs) > 0 {
 		return categoriesModels.CategoryResponse{}, http.StatusInternalServerError, errs

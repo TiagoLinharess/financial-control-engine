@@ -1,7 +1,10 @@
 package models
 
-import "financialcontrol/internal/models/errors"
+import (
+	"context"
+	"financialcontrol/internal/models/errors"
+)
 
 type CategoriesRepository interface {
-	CreateCategory(data CreateCategory) (Category, []errors.ApiError)
+	CreateCategory(context context.Context, data CreateCategory) (Category, []errors.ApiError)
 }
