@@ -19,7 +19,7 @@ func (c *CategoriesController) CreateCategory(w http.ResponseWriter, r *http.Req
 	utils.SendResponse(w, data, status, err)
 }
 
-func (c *CategoriesController) ReadCategories(w http.ResponseWriter, r *http.Request) {
+func (c *CategoriesController) ReadCategoriesByUser(w http.ResponseWriter, r *http.Request) {
 	utils.SendResponse(w, "success", http.StatusOK, nil)
 }
 
