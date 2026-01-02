@@ -25,7 +25,8 @@ func (c *CategoriesController) ReadCategoriesByUser(w http.ResponseWriter, r *ht
 }
 
 func (c *CategoriesController) ReadCategory(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK, nil)
+	data, status, err := c.service.ReadCategoryByID(w, r)
+	utils.SendResponse(w, data, status, err)
 }
 
 func (c *CategoriesController) UpdateCategory(w http.ResponseWriter, r *http.Request) {
