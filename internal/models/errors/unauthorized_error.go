@@ -3,14 +3,14 @@ package errors
 type UnauthorizedErrorReasons string
 
 const (
-	UserIDNotFound = "UserID not found"
-	UserIDInvalid  = "UserID invalid"
+	UserIDNotFound UnauthorizedErrorReasons = "UserID not found"
+	UserIDInvalid  UnauthorizedErrorReasons = "UserID invalid"
 )
 
 type UnauthorizedError struct {
-	Message string
+	Message UnauthorizedErrorReasons
 }
 
 func (u UnauthorizedError) String() string {
-	return u.Message
+	return string(u.Message)
 }

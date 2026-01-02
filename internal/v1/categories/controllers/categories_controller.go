@@ -10,8 +10,8 @@ type CategoriesController struct {
 	service models.CategoriesService
 }
 
-func NewCategoriesController(service models.CategoriesService) CategoriesController {
-	return CategoriesController{service: service}
+func NewCategoriesController(service models.CategoriesService) *CategoriesController {
+	return &CategoriesController{service: service}
 }
 
 func (c *CategoriesController) CreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,8 @@ func (c *CategoriesController) CreateCategory(w http.ResponseWriter, r *http.Req
 }
 
 func (c *CategoriesController) ReadCategoriesByUser(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK, nil)
+	data, status, err := c.service.ReadCategoriesByUser(w, r)
+	utils.SendResponse(w, data, status, err)
 }
 
 func (c *CategoriesController) ReadCategory(w http.ResponseWriter, r *http.Request) {

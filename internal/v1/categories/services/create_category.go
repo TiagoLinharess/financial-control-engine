@@ -14,6 +14,16 @@ func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request
 		return categoriesModels.CategoryResponse{}, http.StatusUnauthorized, errs
 	}
 
+	count, errs := c.repository.GetCategoriesCountByUser(r.Context(), userID)
+
+	if len(errs) > 0 {
+		return categoriesModels.CategoryResponse{}, http.StatusInternalServerError, errs
+	}
+
+	if count >= 10 {
+		return categoriesModels.CategoryResponse{}, http.StatusForbidden, []errors.ApiError{errors.LimitError{Message: errors.CategoriesLimit}}
+	}
+
 	request, errs := utils.DecodeValidJson[categoriesModels.CategoryRequest](r)
 
 	if len(errs) > 0 {

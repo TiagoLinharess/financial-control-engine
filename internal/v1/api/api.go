@@ -13,7 +13,7 @@ import (
 
 type Api struct {
 	Router               *chi.Mux
-	CategoriesController controllers.CategoriesController
+	CategoriesController *controllers.CategoriesController
 }
 
 func NewApi(
@@ -26,7 +26,7 @@ func NewApi(
 	}
 }
 
-func createCategory(store store.CategoriesStore) controllers.CategoriesController {
+func createCategory(store store.CategoriesStore) *controllers.CategoriesController {
 	categoriesRepository := repositories.NewCategoriesRepository(store)
 	categoriesService := services.NewCategoriesService(categoriesRepository)
 	return controllers.NewCategoriesController(categoriesService)
