@@ -27,12 +27,12 @@ func (s CategoriesService) ReadCategoryByID(w http.ResponseWriter, r *http.Reque
 
 	category, errs := s.repository.ReadCategoryByID(r.Context(), categoryID)
 
-	if len(errs) > 0 {
+	if len(errs) > 0 || errs.cont {
 		return models.CategoryResponse{}, http.StatusInternalServerError, errs
 	}
 
-	if category.UserID != userID {
-
+	if category.UserID != userID || category.ID != categoryID {
+		return models.CategoryResponse{}, http.StatusNotFound, []errors.ApiError{errors.NotFoundError{Message: errors.CategoryNotFound}}
 	}
 
 	return models.CategoryResponse{
