@@ -2,6 +2,7 @@ package services
 
 import (
 	"financialcontrol/internal/models/errors"
+	"financialcontrol/internal/store"
 	"financialcontrol/internal/utils"
 	"financialcontrol/internal/v1/categories/models"
 	categoriesModels "financialcontrol/internal/v1/categories/models"
@@ -12,6 +13,7 @@ import (
 )
 
 func (s CategoriesService) ReadCategoryByID(w http.ResponseWriter, r *http.Request) (models.CategoryResponse, int, []errors.ApiError) {
+	categoryNotFoundErr := []errors.ApiError{errors.NotFoundError{Message: errors.CategoryNotFound}}
 	userID, errs := utils.ReadUserIdFromCookie(w, r)
 
 	if len(errs) > 0 {
@@ -27,12 +29,18 @@ func (s CategoriesService) ReadCategoryByID(w http.ResponseWriter, r *http.Reque
 
 	category, errs := s.repository.ReadCategoryByID(r.Context(), categoryID)
 
-	if len(errs) > 0 || errs.cont {
+	if len(errs) > 0 {
+		isNotFoundErr := utils.FindIf(errs, func(err errors.ApiError) bool {
+			return err.String() == string(store.ErrNoRows)
+		})
+		if isNotFoundErr {
+			return models.CategoryResponse{}, http.StatusNotFound, categoryNotFoundErr
+		}
 		return models.CategoryResponse{}, http.StatusInternalServerError, errs
 	}
 
-	if category.UserID != userID || category.ID != categoryID {
-		return models.CategoryResponse{}, http.StatusNotFound, []errors.ApiError{errors.NotFoundError{Message: errors.CategoryNotFound}}
+	if category.UserID != userID {
+		return models.CategoryResponse{}, http.StatusNotFound, categoryNotFoundErr
 	}
 
 	return models.CategoryResponse{
