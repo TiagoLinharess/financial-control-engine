@@ -1,16 +1,17 @@
 package controllers
 
 import (
+	"financialcontrol/internal/models"
 	"financialcontrol/internal/utils"
-	"financialcontrol/internal/v1/categories/models"
+	categoriesModels "financialcontrol/internal/v1/categories/models"
 	"net/http"
 )
 
 type CategoriesController struct {
-	service models.CategoriesService
+	service categoriesModels.CategoriesService
 }
 
-func NewCategoriesController(service models.CategoriesService) *CategoriesController {
+func NewCategoriesController(service categoriesModels.CategoriesService) *CategoriesController {
 	return &CategoriesController{service: service}
 }
 
@@ -30,9 +31,11 @@ func (c *CategoriesController) ReadCategory(w http.ResponseWriter, r *http.Reque
 }
 
 func (c *CategoriesController) UpdateCategory(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK, nil)
+	data, status, err := c.service.UpdateCategory(w, r)
+	utils.SendResponse(w, data, status, err)
 }
 
 func (c *CategoriesController) DeleteCategory(w http.ResponseWriter, r *http.Request) {
-	utils.SendResponse(w, "success", http.StatusOK, nil)
+	status, err := c.service.DeleteCategory(w, r)
+	utils.SendResponse(w, models.NewResponseSuccess(), status, err)
 }

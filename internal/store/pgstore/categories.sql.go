@@ -62,6 +62,16 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 	return i, err
 }
 
+const deleteCategoryByID = `-- name: DeleteCategoryByID :exec
+DELETE FROM categories
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCategoryByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteCategoryByID, id)
+	return err
+}
+
 const getCategoriesByUserID = `-- name: GetCategoriesByUserID :many
 SELECT id, user_id, transaction_type, name, icon, created_at, updated_at
 FROM categories
@@ -105,6 +115,44 @@ WHERE id = $1
 
 func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error) {
 	row := q.db.QueryRow(ctx, getCategoryByID, id)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TransactionType,
+		&i.Name,
+		&i.Icon,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateCategory = `-- name: UpdateCategory :one
+UPDATE categories
+SET 
+    name = $2,
+    icon = $3,
+    transaction_type = $4,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, user_id, transaction_type, name, icon, created_at, updated_at
+`
+
+type UpdateCategoryParams struct {
+	ID              uuid.UUID `json:"id"`
+	Name            string    `json:"name"`
+	Icon            string    `json:"icon"`
+	TransactionType int32     `json:"transaction_type"`
+}
+
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, updateCategory,
+		arg.ID,
+		arg.Name,
+		arg.Icon,
+		arg.TransactionType,
+	)
 	var i Category
 	err := row.Scan(
 		&i.ID,

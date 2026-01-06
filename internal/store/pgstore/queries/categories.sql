@@ -23,3 +23,17 @@ WHERE user_id = $1;
 SELECT id, user_id, transaction_type, name, icon, created_at, updated_at
 FROM categories
 WHERE id = $1;
+
+-- name: UpdateCategory :one
+UPDATE categories
+SET 
+    name = $2,
+    icon = $3,
+    transaction_type = $4,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, user_id, transaction_type, name, icon, created_at, updated_at;
+
+-- name: DeleteCategoryByID :exec
+DELETE FROM categories
+WHERE id = $1;

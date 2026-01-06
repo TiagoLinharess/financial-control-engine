@@ -23,6 +23,7 @@ func (s CategoriesService) ReadCategoryByID(w http.ResponseWriter, r *http.Reque
 	categoryIDString := chi.URLParam(r, "id")
 
 	categoryID, err := uuid.Parse(categoryIDString)
+
 	if err != nil {
 		return models.CategoryResponse{}, http.StatusBadRequest, errs
 	}

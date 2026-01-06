@@ -99,3 +99,37 @@ func (c CategoriesRepository) GetCategoriesCountByUser(context context.Context, 
 
 	return count, nil
 }
+
+func (c CategoriesRepository) UpdateCategory(context context.Context, category categoriesModels.Category) (categoriesModels.Category, []errors.ApiError) {
+	param := pgstore.UpdateCategoryParams{
+		ID:              category.ID,
+		Name:            category.Name,
+		Icon:            category.Icon,
+		TransactionType: int32(category.TransactionType),
+	}
+
+	updatedCategory, err := c.store.UpdateCategory(context, param)
+
+	if err != nil {
+		return categoriesModels.Category{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+	}
+
+	return categoriesModels.Category{
+		ID:              updatedCategory.ID,
+		UserID:          updatedCategory.UserID,
+		TransactionType: models.TransactionType(updatedCategory.TransactionType),
+		Name:            updatedCategory.Name,
+		Icon:            updatedCategory.Icon,
+		CreatedAt:       updatedCategory.CreatedAt.Time,
+		UpdatedAt:       updatedCategory.UpdatedAt.Time,
+	}, nil
+}
+
+func (c CategoriesRepository) DeleteCategory(context context.Context, categoryID uuid.UUID) []errors.ApiError {
+	err := c.store.DeleteCategoryByID(context, categoryID)
+
+	if err != nil {
+		return []errors.ApiError{errors.StoreError{Message: err.Error()}}
+	}
+	return nil
+}
