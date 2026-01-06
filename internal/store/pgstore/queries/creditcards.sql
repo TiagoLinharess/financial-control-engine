@@ -20,6 +20,11 @@ ORDER BY created_at DESC;
 SELECT * FROM credit_cards
 WHERE id = $1;
 
+-- name: CountCreditCardsByUserID :one
+SELECT COUNT(*) as total
+FROM credit_cards
+WHERE user_id = $1;
+
 -- name: UpdateCreditCard :one
 UPDATE credit_cards
 SET

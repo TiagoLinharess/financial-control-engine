@@ -11,6 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const countCreditCardsByUserID = `-- name: CountCreditCardsByUserID :one
+SELECT COUNT(*) as total
+FROM credit_cards
+WHERE user_id = $1
+`
+
+func (q *Queries) CountCreditCardsByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countCreditCardsByUserID, userID)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const createCreditCard = `-- name: CreateCreditCard :one
 INSERT INTO credit_cards (
     user_id, 
