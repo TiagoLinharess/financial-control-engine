@@ -8,7 +8,6 @@ import (
 
 type CreditCardResponse struct {
 	ID               uuid.UUID `json:"id"`
-	UserID           uuid.UUID `json:"user_id"`
 	Name             string    `json:"name"`
 	FirstFourNumbers string    `json:"first_four_numbers"`
 	Limit            float64   `json:"limit"`

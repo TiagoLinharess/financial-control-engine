@@ -3,7 +3,6 @@ package models
 import (
 	"financialcontrol/internal/models/errors"
 	"financialcontrol/internal/utils"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -62,21 +61,5 @@ func (c CreditCardRequest) ToCreateModel(userID uuid.UUID) CreateCreditCard {
 		ExpireDay:        c.ExpireDay,
 		BackgroundColor:  c.BackgroundColor,
 		TextColor:        c.TextColor,
-	}
-}
-
-func (c CreditCardRequest) ToModel(id uuid.UUID, userID uuid.UUID, createdAt time.Time, updatedAt time.Time) CreditCard {
-	return CreditCard{
-		ID:               id,
-		UserID:           userID,
-		Name:             c.Name,
-		FirstFourNumbers: c.FirstFourNumbers,
-		Limit:            c.Limit,
-		CloseDay:         c.CloseDay,
-		ExpireDay:        c.ExpireDay,
-		BackgroundColor:  c.BackgroundColor,
-		TextColor:        c.TextColor,
-		CreatedAt:        createdAt,
-		UpdatedAt:        updatedAt,
 	}
 }

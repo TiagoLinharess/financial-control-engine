@@ -8,9 +8,9 @@ import (
 )
 
 type CategoriesService interface {
-	CreateCategory(ctx *gin.Context) (CategoryResponse, int, []errors.ApiError)
-	ReadCategoriesByUser(ctx *gin.Context) (models.ResponseList[CategoryResponse], int, []errors.ApiError)
-	ReadCategoryByID(ctx *gin.Context) (CategoryResponse, int, []errors.ApiError)
-	UpdateCategory(ctx *gin.Context) (CategoryResponse, int, []errors.ApiError)
-	DeleteCategory(ctx *gin.Context) (int, []errors.ApiError)
+	Create(ctx *gin.Context) (CategoryResponse, int, []errors.ApiError)
+	Read(ctx *gin.Context) (models.ResponseList[CategoryResponse], int, []errors.ApiError)
+	ReadByID(ctx *gin.Context) (CategoryResponse, int, []errors.ApiError)
+	Update(ctx *gin.Context) (CategoryResponse, int, []errors.ApiError)
+	Delete(ctx *gin.Context) (int, []errors.ApiError)
 }

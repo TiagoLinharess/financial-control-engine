@@ -16,3 +16,14 @@ type Category struct {
 	CreatedAt       time.Time              `json:"created_at"`
 	UpdatedAt       time.Time              `json:"updated_at"`
 }
+
+func (c Category) ToResponse() CategoryResponse {
+	return CategoryResponse{
+		ID:              c.ID,
+		TransactionType: c.TransactionType,
+		Name:            c.Name,
+		Icon:            c.Icon,
+		CreatedAt:       c.CreatedAt,
+		UpdatedAt:       c.UpdatedAt,
+	}
+}

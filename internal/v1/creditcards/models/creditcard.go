@@ -23,7 +23,6 @@ type CreditCard struct {
 func (c CreditCard) ToResponse() CreditCardResponse {
 	return CreditCardResponse{
 		ID:               c.ID,
-		UserID:           c.UserID,
 		Name:             c.Name,
 		FirstFourNumbers: c.FirstFourNumbers,
 		Limit:            c.Limit,

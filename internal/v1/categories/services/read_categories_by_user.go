@@ -1,40 +1,33 @@
 package services
 
 import (
-	globalModels "financialcontrol/internal/models"
-	"financialcontrol/internal/models/errors"
-	"financialcontrol/internal/utils"
-	categoriesModels "financialcontrol/internal/v1/categories/models"
+	m "financialcontrol/internal/models"
+	e "financialcontrol/internal/models/errors"
+	u "financialcontrol/internal/utils"
+	cm "financialcontrol/internal/v1/categories/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (c CategoriesService) ReadCategoriesByUser(ctx *gin.Context) (globalModels.ResponseList[categoriesModels.CategoryResponse], int, []errors.ApiError) {
-	userID, errs := utils.ReadUserIdFromCookie(ctx)
+func (c CategoriesService) Read(ctx *gin.Context) (m.ResponseList[cm.CategoryResponse], int, []e.ApiError) {
+	userID, errs := u.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
-		return globalModels.ResponseList[categoriesModels.CategoryResponse]{}, http.StatusUnauthorized, errs
+		return m.ResponseList[cm.CategoryResponse]{}, http.StatusUnauthorized, errs
 	}
 
-	categories, errs := c.repository.ReadCategoriesByUser(ctx, userID)
+	categories, errs := c.repository.Read(ctx, userID)
 
 	if len(errs) > 0 {
-		return globalModels.ResponseList[categoriesModels.CategoryResponse]{}, http.StatusInternalServerError, errs
+		return m.ResponseList[cm.CategoryResponse]{}, http.StatusInternalServerError, errs
 	}
 
-	response := make([]categoriesModels.CategoryResponse, 0, len(categories))
+	response := make([]cm.CategoryResponse, 0, len(categories))
 
 	for _, category := range categories {
-		response = append(response, categoriesModels.CategoryResponse{
-			ID:              category.ID,
-			TransactionType: category.TransactionType,
-			Name:            category.Name,
-			Icon:            category.Icon,
-			CreatedAt:       category.CreatedAt,
-			UpdatedAt:       category.UpdatedAt,
-		})
+		response = append(response, category.ToResponse())
 	}
 
-	return globalModels.ResponseList[categoriesModels.CategoryResponse]{Items: response, Total: len(response)}, http.StatusOK, nil
+	return m.ResponseList[cm.CategoryResponse]{Items: response, Total: len(response)}, http.StatusOK, nil
 }

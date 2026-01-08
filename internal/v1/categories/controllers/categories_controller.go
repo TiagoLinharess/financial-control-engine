@@ -16,27 +16,27 @@ func NewCategoriesController(service categoriesModels.CategoriesService) *Catego
 	return &CategoriesController{service: service}
 }
 
-func (c *CategoriesController) CreateCategory(ctx *gin.Context) {
-	data, status, err := c.service.CreateCategory(ctx)
+func (c *CategoriesController) Create(ctx *gin.Context) {
+	data, status, err := c.service.Create(ctx)
 	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CategoriesController) ReadCategoriesByUser(ctx *gin.Context) {
-	data, status, err := c.service.ReadCategoriesByUser(ctx)
+func (c *CategoriesController) Read(ctx *gin.Context) {
+	data, status, err := c.service.Read(ctx)
 	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CategoriesController) ReadCategory(ctx *gin.Context) {
-	data, status, err := c.service.ReadCategoryByID(ctx)
+func (c *CategoriesController) ReadByID(ctx *gin.Context) {
+	data, status, err := c.service.ReadByID(ctx)
 	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CategoriesController) UpdateCategory(ctx *gin.Context) {
-	data, status, err := c.service.UpdateCategory(ctx)
+func (c *CategoriesController) Update(ctx *gin.Context) {
+	data, status, err := c.service.Update(ctx)
 	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CategoriesController) DeleteCategory(ctx *gin.Context) {
-	status, err := c.service.DeleteCategory(ctx)
+func (c *CategoriesController) Delete(ctx *gin.Context) {
+	status, err := c.service.Delete(ctx)
 	utils.SendResponse(ctx, models.NewResponseSuccess(), status, err)
 }

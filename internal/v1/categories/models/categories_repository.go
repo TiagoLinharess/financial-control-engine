@@ -8,10 +8,10 @@ import (
 )
 
 type CategoriesRepository interface {
-	CreateCategory(context context.Context, data CreateCategory) (Category, []errors.ApiError)
-	ReadCategoriesByUser(context context.Context, userID uuid.UUID) ([]Category, []errors.ApiError)
-	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (Category, []errors.ApiError)
-	GetCategoriesCountByUser(context context.Context, userID uuid.UUID) (int64, []errors.ApiError)
-	UpdateCategory(context context.Context, category Category) (Category, []errors.ApiError)
-	DeleteCategory(context context.Context, categoryID uuid.UUID) []errors.ApiError
+	Create(context context.Context, data CreateCategory) (Category, []errors.ApiError)
+	Read(context context.Context, userID uuid.UUID) ([]Category, []errors.ApiError)
+	ReadByID(context context.Context, categoryID uuid.UUID) (Category, []errors.ApiError)
+	GetCountByUser(context context.Context, userID uuid.UUID) (int64, []errors.ApiError)
+	Update(context context.Context, category Category) (Category, []errors.ApiError)
+	Delete(context context.Context, categoryID uuid.UUID) []errors.ApiError
 }

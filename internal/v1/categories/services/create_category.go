@@ -1,56 +1,44 @@
 package services
 
 import (
-	"financialcontrol/internal/models/errors"
-	"financialcontrol/internal/utils"
-	categoriesModels "financialcontrol/internal/v1/categories/models"
+	e "financialcontrol/internal/models/errors"
+	u "financialcontrol/internal/utils"
+	cm "financialcontrol/internal/v1/categories/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (c CategoriesService) CreateCategory(ctx *gin.Context) (categoriesModels.CategoryResponse, int, []errors.ApiError) {
-	userID, errs := utils.ReadUserIdFromCookie(ctx)
+func (c CategoriesService) Create(ctx *gin.Context) (cm.CategoryResponse, int, []e.ApiError) {
+	userID, errs := u.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
-		return categoriesModels.CategoryResponse{}, http.StatusUnauthorized, errs
+		return cm.CategoryResponse{}, http.StatusUnauthorized, errs
 	}
 
-	count, errs := c.repository.GetCategoriesCountByUser(ctx, userID)
+	count, errs := c.repository.GetCountByUser(ctx, userID)
 
 	if len(errs) > 0 {
-		return categoriesModels.CategoryResponse{}, http.StatusInternalServerError, errs
+		return cm.CategoryResponse{}, http.StatusInternalServerError, errs
 	}
 
 	if count >= 10 {
-		return categoriesModels.CategoryResponse{}, http.StatusForbidden, []errors.ApiError{errors.LimitError{Message: errors.CategoriesLimit}}
+		return cm.CategoryResponse{}, http.StatusForbidden, []e.ApiError{e.LimitError{Message: e.CategoriesLimit}}
 	}
 
-	request, errs := utils.DecodeValidJson[categoriesModels.CategoryRequest](ctx)
+	request, errs := u.DecodeValidJson[cm.CategoryRequest](ctx)
 
 	if len(errs) > 0 {
-		return categoriesModels.CategoryResponse{}, http.StatusBadRequest, errs
+		return cm.CategoryResponse{}, http.StatusBadRequest, errs
 	}
 
-	data := categoriesModels.CreateCategory{
-		UserID:          userID,
-		TransactionType: *request.TransactionType,
-		Name:            request.Name,
-		Icon:            request.Icon,
-	}
+	data := request.ToCreateModel(userID)
 
-	category, errs := c.repository.CreateCategory(ctx, data)
+	category, errs := c.repository.Create(ctx, data)
 
 	if len(errs) > 0 {
-		return categoriesModels.CategoryResponse{}, http.StatusInternalServerError, errs
+		return cm.CategoryResponse{}, http.StatusInternalServerError, errs
 	}
 
-	return categoriesModels.CategoryResponse{
-		ID:              category.ID,
-		TransactionType: category.TransactionType,
-		Name:            category.Name,
-		Icon:            category.Icon,
-		CreatedAt:       category.CreatedAt,
-		UpdatedAt:       category.UpdatedAt,
-	}, http.StatusCreated, nil
+	return category.ToResponse(), http.StatusCreated, nil
 }

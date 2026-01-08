@@ -4,6 +4,8 @@ import (
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/models/errors"
 	"financialcontrol/internal/utils"
+
+	"github.com/google/uuid"
 )
 
 type CategoryRequest struct {
@@ -29,4 +31,13 @@ func (c CategoryRequest) Validate() []errors.ApiError {
 	}
 
 	return errs
+}
+
+func (c CategoryRequest) ToCreateModel(userID uuid.UUID) CreateCategory {
+	return CreateCategory{
+		UserID:          userID,
+		TransactionType: *c.TransactionType,
+		Name:            c.Name,
+		Icon:            c.Icon,
+	}
 }
