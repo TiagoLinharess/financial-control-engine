@@ -27,6 +27,8 @@ type CreditCard struct {
 	CreditLimit      float64            `json:"credit_limit"`
 	CloseDay         int32              `json:"close_day"`
 	ExpireDay        int32              `json:"expire_day"`
+	BackgroundColor  string             `json:"background_color"`
+	TextColor        string             `json:"text_color"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }

@@ -14,6 +14,8 @@ type CreditCardResponse struct {
 	Limit            float64   `json:"limit"`
 	CloseDay         int32     `json:"close_day"`
 	ExpireDay        int32     `json:"expire_day"`
+	BackgroundColor  string    `json:"background_color"`
+	TextColor        string    `json:"text_color"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }

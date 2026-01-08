@@ -18,7 +18,7 @@ func NewCreditCardsRepository(store s.CreditCardsStore) cm.CreditCardsRepository
 	return CreditCardsRepository{store: store}
 }
 
-func (c CreditCardsRepository) Create(context c.Context, creditCard cm.CreditCard) (cm.CreditCard, []e.ApiError) {
+func (c CreditCardsRepository) Create(context c.Context, creditCard cm.CreateCreditCard) (cm.CreditCard, []e.ApiError) {
 	param := pgs.CreateCreditCardParams{
 		UserID:           creditCard.UserID,
 		Name:             creditCard.Name,
@@ -26,6 +26,8 @@ func (c CreditCardsRepository) Create(context c.Context, creditCard cm.CreditCar
 		CreditLimit:      creditCard.Limit,
 		CloseDay:         creditCard.CloseDay,
 		ExpireDay:        creditCard.ExpireDay,
+		BackgroundColor:  creditCard.BackgroundColor,
+		TextColor:        creditCard.TextColor,
 	}
 
 	createdCreditCard, err := c.store.CreateCreditCard(context, param)
@@ -34,17 +36,7 @@ func (c CreditCardsRepository) Create(context c.Context, creditCard cm.CreditCar
 		return cm.CreditCard{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	return cm.CreditCard{
-		ID:               createdCreditCard.ID,
-		UserID:           createdCreditCard.UserID,
-		Name:             createdCreditCard.Name,
-		FirstFourNumbers: createdCreditCard.FirstFourNumbers,
-		Limit:            createdCreditCard.CreditLimit,
-		CloseDay:         createdCreditCard.CloseDay,
-		ExpireDay:        createdCreditCard.ExpireDay,
-		CreatedAt:        createdCreditCard.CreatedAt.Time,
-		UpdatedAt:        createdCreditCard.UpdatedAt.Time,
-	}, nil
+	return storeModelToModel(createdCreditCard), nil
 }
 
 func (c CreditCardsRepository) Read(context c.Context, userId uuid.UUID) ([]cm.CreditCard, []e.ApiError) {
@@ -61,17 +53,7 @@ func (c CreditCardsRepository) Read(context c.Context, userId uuid.UUID) ([]cm.C
 	creditCardsResponse := make([]cm.CreditCard, 0, len(creditCards))
 
 	for _, creditCard := range creditCards {
-		creditCardsResponse = append(creditCardsResponse, cm.CreditCard{
-			ID:               creditCard.ID,
-			UserID:           creditCard.UserID,
-			Name:             creditCard.Name,
-			FirstFourNumbers: creditCard.FirstFourNumbers,
-			Limit:            creditCard.CreditLimit,
-			CloseDay:         creditCard.CloseDay,
-			ExpireDay:        creditCard.ExpireDay,
-			CreatedAt:        creditCard.CreatedAt.Time,
-			UpdatedAt:        creditCard.UpdatedAt.Time,
-		})
+		creditCardsResponse = append(creditCardsResponse, storeModelToModel(creditCard))
 	}
 
 	return creditCardsResponse, nil
@@ -84,17 +66,7 @@ func (c CreditCardsRepository) ReadByID(context c.Context, creditCardId uuid.UUI
 		return cm.CreditCard{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	return cm.CreditCard{
-		ID:               creditCard.ID,
-		UserID:           creditCard.UserID,
-		Name:             creditCard.Name,
-		FirstFourNumbers: creditCard.FirstFourNumbers,
-		Limit:            creditCard.CreditLimit,
-		CloseDay:         creditCard.CloseDay,
-		ExpireDay:        creditCard.ExpireDay,
-		CreatedAt:        creditCard.CreatedAt.Time,
-		UpdatedAt:        creditCard.UpdatedAt.Time,
-	}, nil
+	return storeModelToModel(creditCard), nil
 }
 
 func (c CreditCardsRepository) ReadCountByUser(context c.Context, userId uuid.UUID) (int, []e.ApiError) {
@@ -115,6 +87,8 @@ func (c CreditCardsRepository) Update(context c.Context, creditCard cm.CreditCar
 		CreditLimit:      creditCard.Limit,
 		CloseDay:         creditCard.CloseDay,
 		ExpireDay:        creditCard.ExpireDay,
+		BackgroundColor:  creditCard.BackgroundColor,
+		TextColor:        creditCard.TextColor,
 	}
 
 	updatedCreditCard, err := c.store.UpdateCreditCard(context, param)
@@ -123,17 +97,7 @@ func (c CreditCardsRepository) Update(context c.Context, creditCard cm.CreditCar
 		return cm.CreditCard{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	return cm.CreditCard{
-		ID:               updatedCreditCard.ID,
-		UserID:           updatedCreditCard.UserID,
-		Name:             updatedCreditCard.Name,
-		FirstFourNumbers: updatedCreditCard.FirstFourNumbers,
-		Limit:            updatedCreditCard.CreditLimit,
-		CloseDay:         updatedCreditCard.CloseDay,
-		ExpireDay:        updatedCreditCard.ExpireDay,
-		CreatedAt:        updatedCreditCard.CreatedAt.Time,
-		UpdatedAt:        updatedCreditCard.UpdatedAt.Time,
-	}, nil
+	return storeModelToModel(updatedCreditCard), nil
 }
 
 func (c CreditCardsRepository) Delete(context c.Context, creditCardId uuid.UUID) []e.ApiError {
@@ -144,4 +108,20 @@ func (c CreditCardsRepository) Delete(context c.Context, creditCardId uuid.UUID)
 	}
 
 	return nil
+}
+
+func storeModelToModel(storeModel pgs.CreditCard) cm.CreditCard {
+	return cm.CreditCard{
+		ID:               storeModel.ID,
+		UserID:           storeModel.UserID,
+		Name:             storeModel.Name,
+		FirstFourNumbers: storeModel.FirstFourNumbers,
+		Limit:            storeModel.CreditLimit,
+		CloseDay:         storeModel.CloseDay,
+		ExpireDay:        storeModel.ExpireDay,
+		BackgroundColor:  storeModel.BackgroundColor,
+		TextColor:        storeModel.TextColor,
+		CreatedAt:        storeModel.CreatedAt.Time,
+		UpdatedAt:        storeModel.UpdatedAt.Time,
+	}
 }

@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS credit_cards (
     credit_limit DOUBLE PRECISION NOT NULL,
     close_day INTEGER NOT NULL,
     expire_day INTEGER NOT NULL,
+    background_color VARCHAR(10) NOT NULL,
+    text_color VARCHAR(10) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

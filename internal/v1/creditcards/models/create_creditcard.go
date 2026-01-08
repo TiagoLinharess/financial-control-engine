@@ -6,8 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreditCard struct {
-	ID               uuid.UUID
+type CreateCreditCard struct {
 	UserID           uuid.UUID
 	Name             string
 	FirstFourNumbers string
@@ -16,13 +15,11 @@ type CreditCard struct {
 	ExpireDay        int32
 	BackgroundColor  string
 	TextColor        string
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
 }
 
-func (c CreditCard) ToResponse() CreditCardResponse {
-	return CreditCardResponse{
-		ID:               c.ID,
+func (c CreateCreditCard) ToModel(id uuid.UUID, createdAt time.Time, updatedAt time.Time) CreditCard {
+	return CreditCard{
+		ID:               id,
 		UserID:           c.UserID,
 		Name:             c.Name,
 		FirstFourNumbers: c.FirstFourNumbers,
@@ -31,7 +28,7 @@ func (c CreditCard) ToResponse() CreditCardResponse {
 		ExpireDay:        c.ExpireDay,
 		BackgroundColor:  c.BackgroundColor,
 		TextColor:        c.TextColor,
-		CreatedAt:        c.CreatedAt,
-		UpdatedAt:        c.UpdatedAt,
+		CreatedAt:        createdAt,
+		UpdatedAt:        updatedAt,
 	}
 }

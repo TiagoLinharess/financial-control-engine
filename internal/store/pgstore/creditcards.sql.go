@@ -31,11 +31,13 @@ INSERT INTO credit_cards (
     first_four_numbers, 
     credit_limit, 
     close_day, 
-    expire_day
+    expire_day,
+    background_color,
+    text_color
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, created_at, updated_at
+RETURNING id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, background_color, text_color, created_at, updated_at
 `
 
 type CreateCreditCardParams struct {
@@ -45,6 +47,8 @@ type CreateCreditCardParams struct {
 	CreditLimit      float64   `json:"credit_limit"`
 	CloseDay         int32     `json:"close_day"`
 	ExpireDay        int32     `json:"expire_day"`
+	BackgroundColor  string    `json:"background_color"`
+	TextColor        string    `json:"text_color"`
 }
 
 func (q *Queries) CreateCreditCard(ctx context.Context, arg CreateCreditCardParams) (CreditCard, error) {
@@ -55,6 +59,8 @@ func (q *Queries) CreateCreditCard(ctx context.Context, arg CreateCreditCardPara
 		arg.CreditLimit,
 		arg.CloseDay,
 		arg.ExpireDay,
+		arg.BackgroundColor,
+		arg.TextColor,
 	)
 	var i CreditCard
 	err := row.Scan(
@@ -65,6 +71,8 @@ func (q *Queries) CreateCreditCard(ctx context.Context, arg CreateCreditCardPara
 		&i.CreditLimit,
 		&i.CloseDay,
 		&i.ExpireDay,
+		&i.BackgroundColor,
+		&i.TextColor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -82,7 +90,8 @@ func (q *Queries) DeleteCreditCard(ctx context.Context, id uuid.UUID) error {
 }
 
 const getCreditCardByID = `-- name: GetCreditCardByID :one
-SELECT id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, created_at, updated_at FROM credit_cards
+SELECT id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, background_color, text_color, created_at, updated_at 
+FROM credit_cards
 WHERE id = $1
 `
 
@@ -97,6 +106,8 @@ func (q *Queries) GetCreditCardByID(ctx context.Context, id uuid.UUID) (CreditCa
 		&i.CreditLimit,
 		&i.CloseDay,
 		&i.ExpireDay,
+		&i.BackgroundColor,
+		&i.TextColor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -104,7 +115,8 @@ func (q *Queries) GetCreditCardByID(ctx context.Context, id uuid.UUID) (CreditCa
 }
 
 const listCreditCards = `-- name: ListCreditCards :many
-SELECT id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, created_at, updated_at FROM credit_cards
+SELECT id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, background_color, text_color, created_at, updated_at 
+FROM credit_cards
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -126,6 +138,8 @@ func (q *Queries) ListCreditCards(ctx context.Context, userID uuid.UUID) ([]Cred
 			&i.CreditLimit,
 			&i.CloseDay,
 			&i.ExpireDay,
+			&i.BackgroundColor,
+			&i.TextColor,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -147,9 +161,11 @@ SET
     credit_limit = $4,
     close_day = $5,
     expire_day = $6,
+    background_color = $7,
+    text_color = $8,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, created_at, updated_at
+RETURNING id, user_id, name, first_four_numbers, credit_limit, close_day, expire_day, background_color, text_color, created_at, updated_at
 `
 
 type UpdateCreditCardParams struct {
@@ -159,6 +175,8 @@ type UpdateCreditCardParams struct {
 	CreditLimit      float64   `json:"credit_limit"`
 	CloseDay         int32     `json:"close_day"`
 	ExpireDay        int32     `json:"expire_day"`
+	BackgroundColor  string    `json:"background_color"`
+	TextColor        string    `json:"text_color"`
 }
 
 func (q *Queries) UpdateCreditCard(ctx context.Context, arg UpdateCreditCardParams) (CreditCard, error) {
@@ -169,6 +187,8 @@ func (q *Queries) UpdateCreditCard(ctx context.Context, arg UpdateCreditCardPara
 		arg.CreditLimit,
 		arg.CloseDay,
 		arg.ExpireDay,
+		arg.BackgroundColor,
+		arg.TextColor,
 	)
 	var i CreditCard
 	err := row.Scan(
@@ -179,6 +199,8 @@ func (q *Queries) UpdateCreditCard(ctx context.Context, arg UpdateCreditCardPara
 		&i.CreditLimit,
 		&i.CloseDay,
 		&i.ExpireDay,
+		&i.BackgroundColor,
+		&i.TextColor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
