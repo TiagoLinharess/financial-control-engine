@@ -8,19 +8,19 @@ import (
 	categoriesModels "financialcontrol/internal/v1/categories/models"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func (s CategoriesService) ReadCategoryByID(w http.ResponseWriter, r *http.Request) (models.CategoryResponse, int, []errors.ApiError) {
+func (s CategoriesService) ReadCategoryByID(ctx *gin.Context) (models.CategoryResponse, int, []errors.ApiError) {
 	categoryNotFoundErr := []errors.ApiError{errors.NotFoundError{Message: errors.CategoryNotFound}}
-	userID, errs := utils.ReadUserIdFromCookie(w, r)
+	userID, errs := utils.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return categoriesModels.CategoryResponse{}, http.StatusUnauthorized, errs
 	}
 
-	categoryIDString := chi.URLParam(r, "id")
+	categoryIDString := ctx.Param("id")
 
 	categoryID, err := uuid.Parse(categoryIDString)
 
@@ -28,7 +28,7 @@ func (s CategoriesService) ReadCategoryByID(w http.ResponseWriter, r *http.Reque
 		return models.CategoryResponse{}, http.StatusBadRequest, errs
 	}
 
-	category, errs := s.repository.ReadCategoryByID(r.Context(), categoryID)
+	category, errs := s.repository.ReadCategoryByID(ctx, categoryID)
 
 	if len(errs) > 0 {
 		isNotFoundErr := utils.FindIf(errs, func(err errors.ApiError) bool {

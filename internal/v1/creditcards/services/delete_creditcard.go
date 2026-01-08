@@ -3,16 +3,18 @@ package services
 import (
 	e "financialcontrol/internal/models/errors"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (c CreditCardsService) Delete(w http.ResponseWriter, r *http.Request) (int, []e.ApiError) {
-	creditcard, status, err := c.read(w, r)
+func (c CreditCardsService) Delete(ctx *gin.Context) (int, []e.ApiError) {
+	creditcard, status, err := c.read(ctx)
 
 	if len(err) > 0 {
 		return status, err
 	}
 
-	err = c.repository.Delete(r.Context(), creditcard.ID)
+	err = c.repository.Delete(ctx, creditcard.ID)
 
 	if len(err) > 0 {
 		return http.StatusInternalServerError, err

@@ -5,16 +5,18 @@ import (
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (c CreditCardsService) Create(w http.ResponseWriter, r *http.Request) (cm.CreditCardResponse, int, []e.ApiError) {
-	userID, errs := u.ReadUserIdFromCookie(w, r)
+func (c CreditCardsService) Create(ctx *gin.Context) (cm.CreditCardResponse, int, []e.ApiError) {
+	userID, errs := u.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return cm.CreditCardResponse{}, http.StatusUnauthorized, errs
 	}
 
-	count, errs := c.repository.ReadCountByUser(r.Context(), userID)
+	count, errs := c.repository.ReadCountByUser(ctx, userID)
 
 	if len(errs) > 0 {
 		return cm.CreditCardResponse{}, http.StatusInternalServerError, errs
@@ -24,7 +26,7 @@ func (c CreditCardsService) Create(w http.ResponseWriter, r *http.Request) (cm.C
 		return cm.CreditCardResponse{}, http.StatusForbidden, []e.ApiError{e.LimitError{Message: e.CreditcardsLimit}}
 	}
 
-	request, errs := u.DecodeValidJson[cm.CreditCardRequest](r)
+	request, errs := u.DecodeValidJson[cm.CreditCardRequest](ctx)
 
 	if len(errs) > 0 {
 		return cm.CreditCardResponse{}, http.StatusBadRequest, errs
@@ -32,7 +34,7 @@ func (c CreditCardsService) Create(w http.ResponseWriter, r *http.Request) (cm.C
 
 	model := request.ToCreateModel(userID)
 
-	creditCard, errs := c.repository.Create(r.Context(), model)
+	creditCard, errs := c.repository.Create(ctx, model)
 
 	if len(errs) > 0 {
 		return cm.CreditCardResponse{}, http.StatusInternalServerError, errs

@@ -2,13 +2,14 @@ package models
 
 import (
 	"financialcontrol/internal/models/errors"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CreditCardsService interface {
-	Create(w http.ResponseWriter, r *http.Request) (CreditCardResponse, int, []errors.ApiError)
-	Read(w http.ResponseWriter, r *http.Request) ([]CreditCardResponse, int, []errors.ApiError)
-	ReadAt(w http.ResponseWriter, r *http.Request) (CreditCardResponse, int, []errors.ApiError)
-	Update(w http.ResponseWriter, r *http.Request) (CreditCardResponse, int, []errors.ApiError)
-	Delete(w http.ResponseWriter, r *http.Request) (int, []errors.ApiError)
+	Create(ctx *gin.Context) (CreditCardResponse, int, []errors.ApiError)
+	Read(ctx *gin.Context) ([]CreditCardResponse, int, []errors.ApiError)
+	ReadAt(ctx *gin.Context) (CreditCardResponse, int, []errors.ApiError)
+	Update(ctx *gin.Context) (CreditCardResponse, int, []errors.ApiError)
+	Delete(ctx *gin.Context) (int, []errors.ApiError)
 }

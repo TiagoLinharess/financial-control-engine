@@ -5,16 +5,18 @@ import (
 	"financialcontrol/internal/utils"
 	categoriesModels "financialcontrol/internal/v1/categories/models"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request) (categoriesModels.CategoryResponse, int, []errors.ApiError) {
-	userID, errs := utils.ReadUserIdFromCookie(w, r)
+func (c CategoriesService) CreateCategory(ctx *gin.Context) (categoriesModels.CategoryResponse, int, []errors.ApiError) {
+	userID, errs := utils.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return categoriesModels.CategoryResponse{}, http.StatusUnauthorized, errs
 	}
 
-	count, errs := c.repository.GetCategoriesCountByUser(r.Context(), userID)
+	count, errs := c.repository.GetCategoriesCountByUser(ctx, userID)
 
 	if len(errs) > 0 {
 		return categoriesModels.CategoryResponse{}, http.StatusInternalServerError, errs
@@ -24,7 +26,7 @@ func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request
 		return categoriesModels.CategoryResponse{}, http.StatusForbidden, []errors.ApiError{errors.LimitError{Message: errors.CategoriesLimit}}
 	}
 
-	request, errs := utils.DecodeValidJson[categoriesModels.CategoryRequest](r)
+	request, errs := utils.DecodeValidJson[categoriesModels.CategoryRequest](ctx)
 
 	if len(errs) > 0 {
 		return categoriesModels.CategoryResponse{}, http.StatusBadRequest, errs
@@ -37,7 +39,7 @@ func (c CategoriesService) CreateCategory(w http.ResponseWriter, r *http.Request
 		Icon:            request.Icon,
 	}
 
-	category, errs := c.repository.CreateCategory(r.Context(), data)
+	category, errs := c.repository.CreateCategory(ctx, data)
 
 	if len(errs) > 0 {
 		return categoriesModels.CategoryResponse{}, http.StatusInternalServerError, errs

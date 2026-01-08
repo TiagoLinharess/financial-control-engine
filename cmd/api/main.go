@@ -4,10 +4,9 @@ import (
 	"context"
 	"financialcontrol/internal/v1/api"
 	"fmt"
-	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -36,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	api := api.NewApi(chi.NewMux(), pool)
+	api := api.NewApi(gin.Default(), pool)
 
 	api.RegisterRoutes()
 
@@ -46,7 +45,7 @@ func main() {
 	}
 
 	fmt.Printf("Starting Server on port :%s\n", port)
-	if err := http.ListenAndServe(":"+port, api.Router); err != nil {
+	if err := api.Router.Run(":" + port); err != nil {
 		panic(err)
 	}
 }

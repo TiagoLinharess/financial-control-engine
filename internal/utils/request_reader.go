@@ -1,24 +1,24 @@
 package utils
 
 import (
-	"encoding/json"
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/models/errors"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func DecodeJson[T any](r *http.Request) (T, []errors.ApiError) {
+func DecodeJson[T any](ctx *gin.Context) (T, []errors.ApiError) {
 	var data T
 
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+	if err := ctx.BindJSON(&data); err != nil {
 		return data, []errors.ApiError{errors.DecodeJsonError{}}
 	}
 
 	return data, nil
 }
 
-func DecodeValidJson[T models.Validator](r *http.Request) (T, []errors.ApiError) {
-	data, errs := DecodeJson[T](r)
+func DecodeValidJson[T models.Validator](ctx *gin.Context) (T, []errors.ApiError) {
+	data, errs := DecodeJson[T](ctx)
 
 	if errs != nil {
 		return data, errs

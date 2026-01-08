@@ -1,23 +1,23 @@
 package api
 
-import "github.com/go-chi/chi/v5"
-
 func (a *Api) RegisterRoutes() {
-	a.Router.Route("/engine/v1", func(r chi.Router) {
-		r.Route("/categories", func(r chi.Router) {
-			r.Post("/", a.CategoriesController.CreateCategory)
-			r.Get("/", a.CategoriesController.ReadCategoriesByUser)
-			r.Get("/{id}", a.CategoriesController.ReadCategory)
-			r.Put("/{id}", a.CategoriesController.UpdateCategory)
-			r.Delete("/{id}", a.CategoriesController.DeleteCategory)
-		})
+	api := a.Router.Group("/engine/v1")
 
-		r.Route("/creditcards", func(r chi.Router) {
-			r.Post("/", a.CreditCardController.Create)
-			r.Get("/", a.CreditCardController.Read)
-			r.Get("/{id}", a.CreditCardController.ReadAt)
-			r.Put("/{id}", a.CreditCardController.Update)
-			r.Delete("/{id}", a.CreditCardController.Delete)
-		})
-	})
+	categories := api.Group("/categories")
+	{
+		categories.POST("/", a.categoriesController.CreateCategory)
+		categories.GET("/", a.categoriesController.ReadCategoriesByUser)
+		categories.GET("/:id", a.categoriesController.ReadCategory)
+		categories.PUT("/:id", a.categoriesController.UpdateCategory)
+		categories.DELETE("/:id", a.categoriesController.DeleteCategory)
+	}
+
+	creditcards := api.Group("/creditcards")
+	{
+		creditcards.POST("/", a.creditCardController.Create)
+		creditcards.GET("/", a.creditCardController.Read)
+		creditcards.GET("/:id", a.creditCardController.ReadAt)
+		creditcards.PUT("/:id", a.creditCardController.Update)
+		creditcards.DELETE("/:id", a.creditCardController.Delete)
+	}
 }

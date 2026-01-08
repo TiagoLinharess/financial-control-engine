@@ -4,7 +4,8 @@ import (
 	m "financialcontrol/internal/models"
 	"financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"
-	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CreditCardsController struct {
@@ -15,27 +16,27 @@ func NewCreditCardsController(service cm.CreditCardsService) *CreditCardsControl
 	return &CreditCardsController{service: service}
 }
 
-func (c *CreditCardsController) Create(w http.ResponseWriter, r *http.Request) {
-	data, status, err := c.service.Create(w, r)
-	utils.SendResponse(w, data, status, err)
+func (c *CreditCardsController) Create(ctx *gin.Context) {
+	data, status, err := c.service.Create(ctx)
+	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CreditCardsController) Read(w http.ResponseWriter, r *http.Request) {
-	data, status, err := c.service.Read(w, r)
-	utils.SendResponse(w, data, status, err)
+func (c *CreditCardsController) Read(ctx *gin.Context) {
+	data, status, err := c.service.Read(ctx)
+	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CreditCardsController) ReadAt(w http.ResponseWriter, r *http.Request) {
-	data, status, err := c.service.ReadAt(w, r)
-	utils.SendResponse(w, data, status, err)
+func (c *CreditCardsController) ReadAt(ctx *gin.Context) {
+	data, status, err := c.service.ReadAt(ctx)
+	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CreditCardsController) Update(w http.ResponseWriter, r *http.Request) {
-	data, status, err := c.service.Update(w, r)
-	utils.SendResponse(w, data, status, err)
+func (c *CreditCardsController) Update(ctx *gin.Context) {
+	data, status, err := c.service.Update(ctx)
+	utils.SendResponse(ctx, data, status, err)
 }
 
-func (c *CreditCardsController) Delete(w http.ResponseWriter, r *http.Request) {
-	status, err := c.service.Delete(w, r)
-	utils.SendResponse(w, m.NewResponseSuccess(), status, err)
+func (c *CreditCardsController) Delete(ctx *gin.Context) {
+	status, err := c.service.Delete(ctx)
+	utils.SendResponse(ctx, m.NewResponseSuccess(), status, err)
 }

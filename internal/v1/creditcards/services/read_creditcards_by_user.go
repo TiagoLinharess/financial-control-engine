@@ -5,16 +5,18 @@ import (
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (c CreditCardsService) Read(w http.ResponseWriter, r *http.Request) ([]cm.CreditCardResponse, int, []e.ApiError) {
-	userID, errs := u.ReadUserIdFromCookie(w, r)
+func (c CreditCardsService) Read(ctx *gin.Context) ([]cm.CreditCardResponse, int, []e.ApiError) {
+	userID, errs := u.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return []cm.CreditCardResponse{}, http.StatusUnauthorized, errs
 	}
 
-	creditCards, errs := c.repository.Read(r.Context(), userID)
+	creditCards, errs := c.repository.Read(ctx, userID)
 
 	if len(errs) > 0 {
 		return []cm.CreditCardResponse{}, http.StatusInternalServerError, errs

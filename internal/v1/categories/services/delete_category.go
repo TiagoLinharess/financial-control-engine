@@ -6,19 +6,19 @@ import (
 	"financialcontrol/internal/utils"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func (s CategoriesService) DeleteCategory(w http.ResponseWriter, r *http.Request) (int, []errors.ApiError) {
+func (s CategoriesService) DeleteCategory(ctx *gin.Context) (int, []errors.ApiError) {
 	categoryNotFoundErr := []errors.ApiError{errors.NotFoundError{Message: errors.CategoryNotFound}}
-	userID, errs := utils.ReadUserIdFromCookie(w, r)
+	userID, errs := utils.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return http.StatusUnauthorized, errs
 	}
 
-	categoryIDString := chi.URLParam(r, "id")
+	categoryIDString := ctx.Param("id")
 
 	categoryID, err := uuid.Parse(categoryIDString)
 
@@ -26,7 +26,7 @@ func (s CategoriesService) DeleteCategory(w http.ResponseWriter, r *http.Request
 		return http.StatusBadRequest, errs
 	}
 
-	category, errs := s.repository.ReadCategoryByID(r.Context(), categoryID)
+	category, errs := s.repository.ReadCategoryByID(ctx, categoryID)
 
 	if len(errs) > 0 {
 		isNotFoundErr := utils.FindIf(errs, func(err errors.ApiError) bool {
@@ -42,7 +42,7 @@ func (s CategoriesService) DeleteCategory(w http.ResponseWriter, r *http.Request
 		return http.StatusNotFound, categoryNotFoundErr
 	}
 
-	errs = s.repository.DeleteCategory(r.Context(), categoryID)
+	errs = s.repository.DeleteCategory(ctx, categoryID)
 
 	if len(errs) > 0 {
 		return http.StatusInternalServerError, errs
