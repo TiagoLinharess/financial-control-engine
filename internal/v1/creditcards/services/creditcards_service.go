@@ -7,7 +7,7 @@ import (
 	cm "financialcontrol/internal/v1/creditcards/models"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -19,15 +19,15 @@ func NewCreditCardsService(repository cm.CreditCardsRepository) cm.CreditCardsSe
 	return &CreditCardsService{repository: repository}
 }
 
-func (c CreditCardsService) read(w http.ResponseWriter, r *http.Request) (cm.CreditCard, int, []e.ApiError) {
+func (c CreditCardsService) read(ctx *gin.Context) (cm.CreditCard, int, []e.ApiError) {
 	creditcardNotFoundErr := []e.ApiError{e.NotFoundError{Message: e.CreditcardNotFound}}
-	userID, errs := u.ReadUserIdFromCookie(w, r)
+	userID, errs := u.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return cm.CreditCard{}, http.StatusUnauthorized, errs
 	}
 
-	creditcardIdString := chi.URLParam(r, "id")
+	creditcardIdString := ctx.Param("id")
 
 	creditcardId, err := uuid.Parse(creditcardIdString)
 
@@ -35,7 +35,7 @@ func (c CreditCardsService) read(w http.ResponseWriter, r *http.Request) (cm.Cre
 		return cm.CreditCard{}, http.StatusBadRequest, errs
 	}
 
-	creditcard, errs := c.repository.ReadByID(r.Context(), creditcardId)
+	creditcard, errs := c.repository.ReadByID(ctx, creditcardId)
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {

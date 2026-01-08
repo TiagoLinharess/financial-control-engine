@@ -6,16 +6,18 @@ import (
 	"financialcontrol/internal/utils"
 	categoriesModels "financialcontrol/internal/v1/categories/models"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func (c CategoriesService) ReadCategoriesByUser(w http.ResponseWriter, r *http.Request) (globalModels.ResponseList[categoriesModels.CategoryResponse], int, []errors.ApiError) {
-	userID, errs := utils.ReadUserIdFromCookie(w, r)
+func (c CategoriesService) ReadCategoriesByUser(ctx *gin.Context) (globalModels.ResponseList[categoriesModels.CategoryResponse], int, []errors.ApiError) {
+	userID, errs := utils.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
 		return globalModels.ResponseList[categoriesModels.CategoryResponse]{}, http.StatusUnauthorized, errs
 	}
 
-	categories, errs := c.repository.ReadCategoriesByUser(r.Context(), userID)
+	categories, errs := c.repository.ReadCategoriesByUser(ctx, userID)
 
 	if len(errs) > 0 {
 		return globalModels.ResponseList[categoriesModels.CategoryResponse]{}, http.StatusInternalServerError, errs

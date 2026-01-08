@@ -10,26 +10,26 @@ import (
 	crr "financialcontrol/internal/v1/creditcards/repositories"
 	crs "financialcontrol/internal/v1/creditcards/services"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Api struct {
-	Router               *chi.Mux
-	CategoriesController *cac.CategoriesController
-	CreditCardController *crc.CreditCardsController
+	Router               *gin.Engine
+	categoriesController *cac.CategoriesController
+	creditCardController *crc.CreditCardsController
 }
 
 func NewApi(
-	router *chi.Mux,
+	router *gin.Engine,
 	pool *pgxpool.Pool,
 ) Api {
 	store := pgstore.New(pool)
 
 	return Api{
 		Router:               router,
-		CategoriesController: createCategory(store),
-		CreditCardController: createCreditCard(store),
+		categoriesController: createCategory(store),
+		creditCardController: createCreditCard(store),
 	}
 }
 
