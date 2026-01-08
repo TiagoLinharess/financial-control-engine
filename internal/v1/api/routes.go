@@ -11,5 +11,13 @@ func (a *Api) RegisterRoutes() {
 			r.Put("/{id}", a.CategoriesController.UpdateCategory)
 			r.Delete("/{id}", a.CategoriesController.DeleteCategory)
 		})
+
+		r.Route("/creditcards", func(r chi.Router) {
+			r.Post("/", a.CreditCardController.Create)
+			r.Get("/", a.CreditCardController.Read)
+			r.Get("/{id}", a.CreditCardController.ReadAt)
+			r.Put("/{id}", a.CreditCardController.Update)
+			r.Delete("/{id}", a.CreditCardController.Delete)
+		})
 	})
 }

@@ -6,10 +6,10 @@ INSERT INTO categories (
     icon
 ) VALUES (
     $1, $2, $3, $4
-) RETURNING id, user_id, transaction_type, name, icon, created_at, updated_at;
+) RETURNING *;
 
 -- name: GetCategoriesByUserID :many
-SELECT id, user_id, transaction_type, name, icon, created_at, updated_at
+SELECT *
 FROM categories
 WHERE user_id = $1
 ORDER BY created_at DESC;
@@ -20,7 +20,7 @@ FROM categories
 WHERE user_id = $1;
 
 -- name: GetCategoryByID :one
-SELECT id, user_id, transaction_type, name, icon, created_at, updated_at
+SELECT *
 FROM categories
 WHERE id = $1;
 
@@ -32,7 +32,7 @@ SET
     transaction_type = $4,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, transaction_type, name, icon, created_at, updated_at;
+RETURNING *;
 
 -- name: DeleteCategoryByID :exec
 DELETE FROM categories

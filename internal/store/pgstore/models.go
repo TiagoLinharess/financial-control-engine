@@ -18,3 +18,17 @@ type Category struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
+
+type CreditCard struct {
+	ID               uuid.UUID          `json:"id"`
+	UserID           uuid.UUID          `json:"user_id"`
+	Name             string             `json:"name"`
+	FirstFourNumbers string             `json:"first_four_numbers"`
+	CreditLimit      float64            `json:"credit_limit"`
+	CloseDay         int32              `json:"close_day"`
+	ExpireDay        int32              `json:"expire_day"`
+	BackgroundColor  string             `json:"background_color"`
+	TextColor        string             `json:"text_color"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}

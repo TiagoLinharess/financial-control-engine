@@ -1,0 +1,48 @@
+-- name: CreateCreditCard :one
+INSERT INTO credit_cards (
+    user_id, 
+    name, 
+    first_four_numbers, 
+    credit_limit, 
+    close_day, 
+    expire_day,
+    background_color,
+    text_color
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+RETURNING *;
+
+-- name: ListCreditCards :many
+SELECT * 
+FROM credit_cards
+WHERE user_id = $1
+ORDER BY created_at DESC;
+
+-- name: GetCreditCardByID :one
+SELECT * 
+FROM credit_cards
+WHERE id = $1;
+
+-- name: CountCreditCardsByUserID :one
+SELECT COUNT(*) as total
+FROM credit_cards
+WHERE user_id = $1;
+
+-- name: UpdateCreditCard :one
+UPDATE credit_cards
+SET
+    name = $2,
+    first_four_numbers = $3,
+    credit_limit = $4,
+    close_day = $5,
+    expire_day = $6,
+    background_color = $7,
+    text_color = $8,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: DeleteCreditCard :exec
+DELETE FROM credit_cards
+WHERE id = $1;
