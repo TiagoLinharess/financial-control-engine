@@ -6,5 +6,17 @@ import (
 )
 
 func (c CreditCardsService) Delete(w http.ResponseWriter, r *http.Request) (int, []e.ApiError) {
-	return http.StatusOK, nil
+	creditcard, status, err := c.read(w, r)
+
+	if len(err) > 0 {
+		return status, err
+	}
+
+	err = c.repository.Delete(r.Context(), creditcard.ID)
+
+	if len(err) > 0 {
+		return http.StatusInternalServerError, err
+	}
+
+	return http.StatusNoContent, nil
 }

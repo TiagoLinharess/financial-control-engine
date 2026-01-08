@@ -1,11 +1,55 @@
 package services
 
-import "financialcontrol/internal/v1/creditcards/models"
+import (
+	e "financialcontrol/internal/models/errors"
+	s "financialcontrol/internal/store"
+	u "financialcontrol/internal/utils"
+	cm "financialcontrol/internal/v1/creditcards/models"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
 
 type CreditCardsService struct {
-	repository models.CreditCardsRepository
+	repository cm.CreditCardsRepository
 }
 
-func NewCreditCardsService(repository models.CreditCardsRepository) models.CreditCardsService {
+func NewCreditCardsService(repository cm.CreditCardsRepository) cm.CreditCardsService {
 	return &CreditCardsService{repository: repository}
+}
+
+func (c CreditCardsService) read(w http.ResponseWriter, r *http.Request) (cm.CreditCard, int, []e.ApiError) {
+	creditcardNotFoundErr := []e.ApiError{e.NotFoundError{Message: e.CreditcardNotFound}}
+	userID, errs := u.ReadUserIdFromCookie(w, r)
+
+	if len(errs) > 0 {
+		return cm.CreditCard{}, http.StatusUnauthorized, errs
+	}
+
+	creditcardIdString := chi.URLParam(r, "id")
+
+	creditcardId, err := uuid.Parse(creditcardIdString)
+
+	if err != nil {
+		return cm.CreditCard{}, http.StatusBadRequest, errs
+	}
+
+	creditcard, errs := c.repository.ReadByID(r.Context(), creditcardId)
+
+	if len(errs) > 0 {
+		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {
+			return err.String() == string(s.ErrNoRows)
+		})
+		if isNotFoundErr {
+			return cm.CreditCard{}, http.StatusNotFound, creditcardNotFoundErr
+		}
+		return cm.CreditCard{}, http.StatusInternalServerError, errs
+	}
+
+	if creditcard.UserID != userID {
+		return cm.CreditCard{}, http.StatusForbidden, creditcardNotFoundErr
+	}
+
+	return creditcard, http.StatusOK, nil
 }
