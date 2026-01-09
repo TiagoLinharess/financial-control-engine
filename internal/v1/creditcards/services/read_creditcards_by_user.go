@@ -1,6 +1,7 @@
 package services
 
 import (
+	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"
@@ -9,17 +10,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (c CreditCardsService) Read(ctx *gin.Context) ([]cm.CreditCardResponse, int, []e.ApiError) {
+func (c CreditCardsService) Read(ctx *gin.Context) (m.ResponseList[cm.CreditCardResponse], int, []e.ApiError) {
 	userID, errs := u.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
-		return []cm.CreditCardResponse{}, http.StatusUnauthorized, errs
+		return m.ResponseList[cm.CreditCardResponse]{}, http.StatusUnauthorized, errs
 	}
 
 	creditCards, errs := c.repository.Read(ctx, userID)
 
 	if len(errs) > 0 {
-		return []cm.CreditCardResponse{}, http.StatusInternalServerError, errs
+		return m.ResponseList[cm.CreditCardResponse]{}, http.StatusInternalServerError, errs
 	}
 
 	creditCardsResponse := make([]cm.CreditCardResponse, 0, len(creditCards))
@@ -28,5 +29,8 @@ func (c CreditCardsService) Read(ctx *gin.Context) ([]cm.CreditCardResponse, int
 		creditCardsResponse = append(creditCardsResponse, creditCard.ToResponse())
 	}
 
-	return creditCardsResponse, http.StatusOK, nil
+	return m.ResponseList[cm.CreditCardResponse]{
+		Items: creditCardsResponse,
+		Total: len(creditCardsResponse),
+	}, http.StatusOK, nil
 }
