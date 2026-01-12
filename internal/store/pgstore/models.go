@@ -9,6 +9,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AnnualTransaction struct {
+	ID           uuid.UUID          `json:"id"`
+	UserID       uuid.UUID          `json:"user_id"`
+	Name         string             `json:"name"`
+	Value        pgtype.Numeric     `json:"value"`
+	Day          int32              `json:"day"`
+	Month        int32              `json:"month"`
+	CategoryID   uuid.UUID          `json:"category_id"`
+	CreditCardID pgtype.UUID        `json:"credit_card_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Category struct {
 	ID              uuid.UUID          `json:"id"`
 	UserID          uuid.UUID          `json:"user_id"`
@@ -31,4 +44,44 @@ type CreditCard struct {
 	TextColor        string             `json:"text_color"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type InstallmentTransaction struct {
+	ID           uuid.UUID          `json:"id"`
+	UserID       uuid.UUID          `json:"user_id"`
+	Name         string             `json:"name"`
+	Value        pgtype.Numeric     `json:"value"`
+	InitialDate  pgtype.Timestamptz `json:"initial_date"`
+	FinalDate    pgtype.Timestamptz `json:"final_date"`
+	CategoryID   uuid.UUID          `json:"category_id"`
+	CreditCardID pgtype.UUID        `json:"credit_card_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MonthlyTransaction struct {
+	ID           uuid.UUID          `json:"id"`
+	UserID       uuid.UUID          `json:"user_id"`
+	Name         string             `json:"name"`
+	Value        pgtype.Numeric     `json:"value"`
+	Day          int32              `json:"day"`
+	CategoryID   uuid.UUID          `json:"category_id"`
+	CreditCardID pgtype.UUID        `json:"credit_card_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Transaction struct {
+	ID                        uuid.UUID          `json:"id"`
+	UserID                    uuid.UUID          `json:"user_id"`
+	Name                      string             `json:"name"`
+	Date                      pgtype.Timestamptz `json:"date"`
+	Value                     pgtype.Numeric     `json:"value"`
+	CategoryID                uuid.UUID          `json:"category_id"`
+	CreditCardID              pgtype.UUID        `json:"credit_card_id"`
+	MonthlyTransactionsID     pgtype.UUID        `json:"monthly_transactions_id"`
+	AnnualTransactionsID      pgtype.UUID        `json:"annual_transactions_id"`
+	InstallmentTransactionsID pgtype.UUID        `json:"installment_transactions_id"`
+	CreatedAt                 pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                 pgtype.Timestamptz `json:"updated_at"`
 }
