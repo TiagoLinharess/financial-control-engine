@@ -7,6 +7,8 @@ import (
 	st "financialcontrol/internal/store"
 	pgs "financialcontrol/internal/store/pgstore"
 	u "financialcontrol/internal/utils"
+	cm "financialcontrol/internal/v1/categories/models"
+	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
 
 	"github.com/google/uuid"
@@ -21,11 +23,11 @@ func NewTransactionsRepository(store st.TransactionsStore) tm.TransactionsReposi
 	return TransactionsRepository{store: store}
 }
 
-func (t TransactionsRepository) Create(context c.Context, transaction tm.CreateTransaction) (tm.Transaction, []e.ApiError) {
+func (t TransactionsRepository) Create(context c.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError) {
 	value, err := u.Float64ToNumeric(transaction.Value)
 
 	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return tm.ShortTransaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
 	param := pgs.CreateTransactionParams{
@@ -34,7 +36,7 @@ func (t TransactionsRepository) Create(context c.Context, transaction tm.CreateT
 		Date:                      pgtype.Timestamptz{Time: transaction.Date, Valid: true},
 		Value:                     value,
 		CategoryID:                transaction.CategoryID,
-		CreditCardID:              u.UUIDToPgTypeUUID(transaction.CreditCardID),
+		CreditCardID:              u.UUIDToPgTypeUUID(transaction.CreditcardID),
 		MonthlyTransactionsID:     u.UUIDToPgTypeUUID(transaction.MonthlyTransactionsID),
 		AnnualTransactionsID:      u.UUIDToPgTypeUUID(transaction.AnnualTransactionsID),
 		InstallmentTransactionsID: u.UUIDToPgTypeUUID(transaction.InstallmentTransactionsID),
@@ -43,16 +45,17 @@ func (t TransactionsRepository) Create(context c.Context, transaction tm.CreateT
 	createdTransaction, err := t.store.CreateTransaction(context, param)
 
 	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return tm.ShortTransaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	transactionModel, err := storeToModel(createdTransaction)
-
-	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
-	}
-
-	return transactionModel, nil
+	return tm.ShortTransaction{
+		ID:        createdTransaction.ID,
+		Name:      createdTransaction.Name,
+		Date:      createdTransaction.Date.Time,
+		Value:     u.NumericToFloat64(createdTransaction.Value),
+		CreatedAt: createdTransaction.CreatedAt.Time,
+		UpdatedAt: createdTransaction.UpdatedAt.Time,
+	}, nil
 }
 
 func (t TransactionsRepository) Read(context c.Context, params m.PaginatedParams) ([]tm.Transaction, int64, []e.ApiError) {
@@ -76,13 +79,7 @@ func (t TransactionsRepository) Read(context c.Context, params m.PaginatedParams
 	count := transactions[len(transactions)-1].TotalCount
 
 	for _, transaction := range transactions {
-		transactionModel, err := storeToModel(paginatedModelToStore(transaction))
-
-		if err != nil {
-			return []tm.Transaction{}, 0, []e.ApiError{e.StoreError{Message: err.Error()}}
-		}
-
-		transactionModels = append(transactionModels, transactionModel)
+		transactionModels = append(transactionModels, storeToModel(storePaginatedToStore(transaction)))
 	}
 
 	return transactionModels, count, nil
@@ -111,13 +108,7 @@ func (t TransactionsRepository) ReadInToDates(context c.Context, params m.Pagina
 	count := transactions[len(transactions)-1].TotalCount
 
 	for _, transaction := range transactions {
-		transactionModel, err := storeToModel(paginatedWithDateModelToStore(transaction))
-
-		if err != nil {
-			return []tm.Transaction{}, 0, []e.ApiError{e.StoreError{Message: err.Error()}}
-		}
-
-		transactionModels = append(transactionModels, transactionModel)
+		transactionModels = append(transactionModels, storeToModel(storeDateToStore(transaction)))
 	}
 
 	return transactionModels, count, nil
@@ -130,20 +121,14 @@ func (t TransactionsRepository) ReadById(context c.Context, id uuid.UUID) (tm.Tr
 		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	model, err := storeToModel(transaction)
-
-	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
-	}
-
-	return model, nil
+	return storeToModel(transaction), nil
 }
 
-func (t TransactionsRepository) Update(context c.Context, transaction tm.Transaction) (tm.Transaction, []e.ApiError) {
+func (t TransactionsRepository) Update(context c.Context, transaction tm.Transaction) (tm.ShortTransaction, []e.ApiError) {
 	value, err := u.Float64ToNumeric(transaction.Value)
 
 	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return tm.ShortTransaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
 	params := pgs.UpdateTransactionParams{
@@ -151,26 +136,27 @@ func (t TransactionsRepository) Update(context c.Context, transaction tm.Transac
 		Name:                      transaction.Name,
 		Date:                      pgtype.Timestamptz{Time: transaction.Date, Valid: true},
 		Value:                     value,
-		CategoryID:                transaction.CategoryID,
-		CreditCardID:              u.UUIDToPgTypeUUID(transaction.CreditCardID),
-		MonthlyTransactionsID:     u.UUIDToPgTypeUUID(transaction.MonthlyTransactionsID),
-		AnnualTransactionsID:      u.UUIDToPgTypeUUID(transaction.AnnualTransactionsID),
-		InstallmentTransactionsID: u.UUIDToPgTypeUUID(transaction.InstallmentTransactionsID),
+		CategoryID:                transaction.Category.ID,
+		CreditCardID:              u.UUIDToPgTypeUUID(&transaction.Creditcard.ID),
+		MonthlyTransactionsID:     u.UUIDToPgTypeUUID(transaction.MonthlyTransaction),
+		AnnualTransactionsID:      u.UUIDToPgTypeUUID(transaction.AnnualTransaction),
+		InstallmentTransactionsID: u.UUIDToPgTypeUUID(transaction.InstallmentTransaction),
 	}
 
 	transactionUpdated, err := t.store.UpdateTransaction(context, params)
 
 	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return tm.ShortTransaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	model, err := storeToModel(transactionUpdated)
-
-	if err != nil {
-		return tm.Transaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
-	}
-
-	return model, nil
+	return tm.ShortTransaction{
+		ID:        transactionUpdated.ID,
+		Name:      transactionUpdated.Name,
+		Date:      transactionUpdated.Date.Time,
+		Value:     u.NumericToFloat64(transactionUpdated.Value),
+		CreatedAt: transactionUpdated.CreatedAt.Time,
+		UpdatedAt: transactionUpdated.UpdatedAt.Time,
+	}, nil
 }
 
 func (t TransactionsRepository) Delete(context c.Context, id uuid.UUID) []e.ApiError {
@@ -183,59 +169,78 @@ func (t TransactionsRepository) Delete(context c.Context, id uuid.UUID) []e.ApiE
 	return nil
 }
 
-func paginatedModelToStore(transaction pgs.ListTransactionsByUserIDPaginatedRow) pgs.Transaction {
-	return pgs.Transaction{
-		ID:                        transaction.ID,
-		UserID:                    transaction.UserID,
-		Name:                      transaction.Name,
-		Date:                      transaction.Date,
-		Value:                     transaction.Value,
-		CategoryID:                transaction.CategoryID,
-		CreditCardID:              transaction.CreditCardID,
-		MonthlyTransactionsID:     transaction.MonthlyTransactionsID,
-		AnnualTransactionsID:      transaction.AnnualTransactionsID,
-		InstallmentTransactionsID: transaction.InstallmentTransactionsID,
-		CreatedAt:                 transaction.CreatedAt,
-		UpdatedAt:                 transaction.UpdatedAt,
+func storeDateToStore(transaction pgs.ListTransactionsByUserAndDateRow) pgs.GetTransactionByIDRow {
+	return storePaginatedToStore(pgs.ListTransactionsByUserIDPaginatedRow(transaction))
+}
+
+func storePaginatedToStore(transaction pgs.ListTransactionsByUserIDPaginatedRow) pgs.GetTransactionByIDRow {
+	return pgs.GetTransactionByIDRow{
+		ID:                                 transaction.ID,
+		UserID:                             transaction.UserID,
+		Name:                               transaction.Name,
+		Date:                               transaction.Date,
+		Value:                              transaction.Value,
+		CreatedAt:                          transaction.CreatedAt,
+		UpdatedAt:                          transaction.UpdatedAt,
+		CategoryID:                         transaction.CategoryID,
+		CategoryTransactionType:            transaction.CategoryTransactionType,
+		CategoryName:                       transaction.CategoryName,
+		CategoryIcon:                       transaction.CategoryIcon,
+		CreditcardID:                       transaction.CreditcardID,
+		CreditcardName:                     transaction.CreditcardName,
+		CreditcardFirstFourNumbers:         transaction.CreditcardFirstFourNumbers,
+		CreditcardCreditLimit:              transaction.CreditcardCreditLimit,
+		CreditcardCloseDay:                 transaction.CreditcardCloseDay,
+		CreditcardExpireDay:                transaction.CreditcardExpireDay,
+		CreditcardBackgroundColor:          transaction.CreditcardBackgroundColor,
+		CreditcardTextColor:                transaction.CreditcardTextColor,
+		MonthlyTransactionsID:              transaction.MonthlyTransactionsID,
+		MonthlyTransactionsDay:             transaction.MonthlyTransactionsDay,
+		AnnualTransactionsID:               transaction.AnnualTransactionsID,
+		AnnualTransactionsMonth:            transaction.AnnualTransactionsMonth,
+		AnnualTransactionsDay:              transaction.AnnualTransactionsDay,
+		InstallmentTransactionsID:          transaction.InstallmentTransactionsID,
+		InstallmentTransactionsInitialDate: transaction.InstallmentTransactionsInitialDate,
+		InstallmentTransactionsFinalDate:   transaction.InstallmentTransactionsFinalDate,
 	}
 }
 
-func paginatedWithDateModelToStore(transaction pgs.ListTransactionsByUserAndDateRow) pgs.Transaction {
-	return pgs.Transaction{
-		ID:                        transaction.ID,
-		UserID:                    transaction.UserID,
-		Name:                      transaction.Name,
-		Date:                      transaction.Date,
-		Value:                     transaction.Value,
-		CategoryID:                transaction.CategoryID,
-		CreditCardID:              transaction.CreditCardID,
-		MonthlyTransactionsID:     transaction.MonthlyTransactionsID,
-		AnnualTransactionsID:      transaction.AnnualTransactionsID,
-		InstallmentTransactionsID: transaction.InstallmentTransactionsID,
-		CreatedAt:                 transaction.CreatedAt,
-		UpdatedAt:                 transaction.UpdatedAt,
+func storeToModel(transaction pgs.GetTransactionByIDRow) tm.Transaction {
+	category := cm.ShortCategory{
+		ID:              *u.PgTypeUUIDToUUID(transaction.CategoryID),
+		TransactionType: m.TransactionType(transaction.CategoryTransactionType.Int32),
+		Name:            transaction.CategoryName.String,
+		Icon:            transaction.CategoryIcon.String,
 	}
-}
 
-func storeToModel(transaction pgs.Transaction) (tm.Transaction, error) {
-	value, err := u.NumericToFloat64(transaction.Value)
+	var creditcard *cr.ShortCreditCard
+	if transaction.CreditcardID.Valid {
+		creditcardValue := cr.ShortCreditCard{
+			ID:               *u.PgTypeUUIDToUUID(transaction.CreditcardID),
+			Name:             transaction.CreditcardName.String,
+			FirstFourNumbers: transaction.CreditcardFirstFourNumbers.String,
+			Limit:            transaction.CreditcardCreditLimit.Float64,
+			CloseDay:         transaction.CreditcardCloseDay.Int32,
+			ExpireDay:        transaction.CreditcardExpireDay.Int32,
+			BackgroundColor:  transaction.CreditcardBackgroundColor.String,
+			TextColor:        transaction.CreditcardTextColor.String,
+		}
 
-	if err != nil {
-		return tm.Transaction{}, err
+		creditcard = &creditcardValue
 	}
 
 	return tm.Transaction{
-		ID:                        transaction.ID,
-		UserID:                    transaction.UserID,
-		Name:                      transaction.Name,
-		Date:                      transaction.Date.Time,
-		Value:                     value,
-		CategoryID:                transaction.CategoryID,
-		CreditCardID:              u.PgTypeUUIDToUUID(transaction.CreditCardID),
-		MonthlyTransactionsID:     u.PgTypeUUIDToUUID(transaction.MonthlyTransactionsID),
-		AnnualTransactionsID:      u.PgTypeUUIDToUUID(transaction.AnnualTransactionsID),
-		InstallmentTransactionsID: u.PgTypeUUIDToUUID(transaction.InstallmentTransactionsID),
-		CreatedAt:                 transaction.CreatedAt.Time,
-		UpdatedAt:                 transaction.UpdatedAt.Time,
-	}, nil
+		ID:                     transaction.ID,
+		UserID:                 transaction.UserID,
+		Name:                   transaction.Name,
+		Date:                   transaction.Date.Time,
+		Value:                  u.NumericToFloat64(transaction.Value),
+		Category:               category,
+		Creditcard:             creditcard,
+		MonthlyTransaction:     nil,
+		AnnualTransaction:      nil,
+		InstallmentTransaction: nil,
+		CreatedAt:              transaction.CreatedAt.Time,
+		UpdatedAt:              transaction.UpdatedAt.Time,
+	}
 }

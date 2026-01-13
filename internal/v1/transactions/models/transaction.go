@@ -1,38 +1,45 @@
 package models
 
 import (
+	cm "financialcontrol/internal/v1/categories/models"
+	cr "financialcontrol/internal/v1/creditcards/models"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Transaction struct {
-	ID                        uuid.UUID
-	UserID                    uuid.UUID
-	Name                      string
-	Date                      time.Time
-	Value                     float64
-	CategoryID                uuid.UUID
-	CreditCardID              *uuid.UUID
-	MonthlyTransactionsID     *uuid.UUID
-	AnnualTransactionsID      *uuid.UUID
-	InstallmentTransactionsID *uuid.UUID
-	CreatedAt                 time.Time
-	UpdatedAt                 time.Time
+	ID                     uuid.UUID
+	UserID                 uuid.UUID
+	Name                   string
+	Date                   time.Time
+	Value                  float64
+	Category               cm.ShortCategory
+	Creditcard             *cr.ShortCreditCard
+	MonthlyTransaction     *uuid.UUID
+	AnnualTransaction      *uuid.UUID
+	InstallmentTransaction *uuid.UUID
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 }
 
 func (t Transaction) ToResponse() TransactionResponse {
+	var creditcard *cr.ShortCreditCardResponse
+	if t.Creditcard != nil {
+		creditcard = t.Creditcard.ToShortResponse()
+	}
+
 	return TransactionResponse{
-		ID:                        t.ID,
-		Name:                      t.Name,
-		Date:                      t.Date,
-		Value:                     t.Value,
-		CategoryID:                t.CategoryID,
-		CreditCardID:              t.CreditCardID,
-		MonthlyTransactionsID:     t.MonthlyTransactionsID,
-		AnnualTransactionsID:      t.AnnualTransactionsID,
-		InstallmentTransactionsID: t.InstallmentTransactionsID,
-		CreatedAt:                 t.CreatedAt,
-		UpdatedAt:                 t.UpdatedAt,
+		ID:                     t.ID,
+		Name:                   t.Name,
+		Date:                   t.Date,
+		Value:                  t.Value,
+		Category:               t.Category.ToShortResponse(),
+		Creditcard:             creditcard,
+		MonthlyTransaction:     nil,
+		AnnualTransaction:      nil,
+		InstallmentTransaction: nil,
+		CreatedAt:              t.CreatedAt,
+		UpdatedAt:              t.UpdatedAt,
 	}
 }

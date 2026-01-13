@@ -23,11 +23,11 @@ func (c CategoryRequest) Validate() []errors.ApiError {
 	}
 
 	if utils.IsBlank(c.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: "Name musto not be empty"})
+		errs = append(errs, errors.InvalidFieldError{Message: "Name must not be empty"})
 	}
 
 	if utils.IsBlank(c.Icon) {
-		errs = append(errs, errors.InvalidFieldError{Message: "Icon musto not be empty"})
+		errs = append(errs, errors.InvalidFieldError{Message: "Icon must not be empty"})
 	}
 
 	return errs

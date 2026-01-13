@@ -26,7 +26,7 @@ INSERT INTO transactions (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
-RETURNING id, user_id, name, date, value, category_id, credit_card_id, monthly_transactions_id, annual_transactions_id, installment_transactions_id, created_at, updated_at
+RETURNING id, name, date, value, created_at, updated_at
 `
 
 type CreateTransactionParams struct {
@@ -41,7 +41,16 @@ type CreateTransactionParams struct {
 	InstallmentTransactionsID pgtype.UUID        `json:"installment_transactions_id"`
 }
 
-func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
+type CreateTransactionRow struct {
+	ID        uuid.UUID          `json:"id"`
+	Name      string             `json:"name"`
+	Date      pgtype.Timestamptz `json:"date"`
+	Value     pgtype.Numeric     `json:"value"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (CreateTransactionRow, error) {
 	row := q.db.QueryRow(ctx, createTransaction,
 		arg.UserID,
 		arg.Name,
@@ -53,18 +62,12 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		arg.AnnualTransactionsID,
 		arg.InstallmentTransactionsID,
 	)
-	var i Transaction
+	var i CreateTransactionRow
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
 		&i.Name,
 		&i.Date,
 		&i.Value,
-		&i.CategoryID,
-		&i.CreditCardID,
-		&i.MonthlyTransactionsID,
-		&i.AnnualTransactionsID,
-		&i.InstallmentTransactionsID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -82,40 +85,159 @@ func (q *Queries) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
 }
 
 const getTransactionByID = `-- name: GetTransactionByID :one
-SELECT id, user_id, name, date, value, category_id, credit_card_id, monthly_transactions_id, annual_transactions_id, installment_transactions_id, created_at, updated_at
-FROM transactions
-WHERE id = $1
+SELECT 
+    t.id,
+    t.user_id, 
+    t.name, 
+    t.date, 
+    t.value, 
+    t.created_at, 
+    t.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    mt.id as monthly_transactions_id, 
+    mt.day as monthly_transactions_day,
+
+    at.id as annual_transactions_id, 
+    at.month as annual_transactions_month, 
+    at.day as annual_transactions_day,
+
+    it.id as installment_transactions_id, 
+    it.initial_date as installment_transactions_initial_date,  
+    it.final_date as installment_transactions_final_date
+FROM transactions t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN credit_cards cc ON t.credit_card_id = cc.id
+LEFT JOIN monthly_transactions mt ON t.monthly_transactions_id = mt.id
+LEFT JOIN annual_transactions at ON t.annual_transactions_id = at.id
+LEFT JOIN installment_transactions it ON t.installment_transactions_id = it.id
+WHERE t.id = $1
 `
 
-func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (Transaction, error) {
+type GetTransactionByIDRow struct {
+	ID                                 uuid.UUID          `json:"id"`
+	UserID                             uuid.UUID          `json:"user_id"`
+	Name                               string             `json:"name"`
+	Date                               pgtype.Timestamptz `json:"date"`
+	Value                              pgtype.Numeric     `json:"value"`
+	CreatedAt                          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                          pgtype.Timestamptz `json:"updated_at"`
+	CategoryID                         pgtype.UUID        `json:"category_id"`
+	CategoryTransactionType            pgtype.Int4        `json:"category_transaction_type"`
+	CategoryName                       pgtype.Text        `json:"category_name"`
+	CategoryIcon                       pgtype.Text        `json:"category_icon"`
+	CreditcardID                       pgtype.UUID        `json:"creditcard_id"`
+	CreditcardName                     pgtype.Text        `json:"creditcard_name"`
+	CreditcardFirstFourNumbers         pgtype.Text        `json:"creditcard_first_four_numbers"`
+	CreditcardCreditLimit              pgtype.Float8      `json:"creditcard_credit_limit"`
+	CreditcardCloseDay                 pgtype.Int4        `json:"creditcard_close_day"`
+	CreditcardExpireDay                pgtype.Int4        `json:"creditcard_expire_day"`
+	CreditcardBackgroundColor          pgtype.Text        `json:"creditcard_background_color"`
+	CreditcardTextColor                pgtype.Text        `json:"creditcard_text_color"`
+	MonthlyTransactionsID              pgtype.UUID        `json:"monthly_transactions_id"`
+	MonthlyTransactionsDay             pgtype.Int4        `json:"monthly_transactions_day"`
+	AnnualTransactionsID               pgtype.UUID        `json:"annual_transactions_id"`
+	AnnualTransactionsMonth            pgtype.Int4        `json:"annual_transactions_month"`
+	AnnualTransactionsDay              pgtype.Int4        `json:"annual_transactions_day"`
+	InstallmentTransactionsID          pgtype.UUID        `json:"installment_transactions_id"`
+	InstallmentTransactionsInitialDate pgtype.Timestamptz `json:"installment_transactions_initial_date"`
+	InstallmentTransactionsFinalDate   pgtype.Timestamptz `json:"installment_transactions_final_date"`
+}
+
+func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (GetTransactionByIDRow, error) {
 	row := q.db.QueryRow(ctx, getTransactionByID, id)
-	var i Transaction
+	var i GetTransactionByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.Name,
 		&i.Date,
 		&i.Value,
-		&i.CategoryID,
-		&i.CreditCardID,
-		&i.MonthlyTransactionsID,
-		&i.AnnualTransactionsID,
-		&i.InstallmentTransactionsID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CategoryID,
+		&i.CategoryTransactionType,
+		&i.CategoryName,
+		&i.CategoryIcon,
+		&i.CreditcardID,
+		&i.CreditcardName,
+		&i.CreditcardFirstFourNumbers,
+		&i.CreditcardCreditLimit,
+		&i.CreditcardCloseDay,
+		&i.CreditcardExpireDay,
+		&i.CreditcardBackgroundColor,
+		&i.CreditcardTextColor,
+		&i.MonthlyTransactionsID,
+		&i.MonthlyTransactionsDay,
+		&i.AnnualTransactionsID,
+		&i.AnnualTransactionsMonth,
+		&i.AnnualTransactionsDay,
+		&i.InstallmentTransactionsID,
+		&i.InstallmentTransactionsInitialDate,
+		&i.InstallmentTransactionsFinalDate,
 	)
 	return i, err
 }
 
 const listTransactionsByUserAndDate = `-- name: ListTransactionsByUserAndDate :many
 SELECT 
-    id, user_id, name, date, value, category_id, credit_card_id, monthly_transactions_id, annual_transactions_id, installment_transactions_id, created_at, updated_at,
+    t.id,
+    t.user_id, 
+    t.name, 
+    t.date, 
+    t.value, 
+    t.created_at, 
+    t.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    mt.id as monthly_transactions_id, 
+    mt.day as monthly_transactions_day,
+
+    at.id as annual_transactions_id, 
+    at.month as annual_transactions_month, 
+    at.day as annual_transactions_day,
+
+    it.id as installment_transactions_id, 
+    it.initial_date as installment_transactions_initial_date,  
+    it.final_date as installment_transactions_final_date,
+
     COUNT(*) OVER() as total_count
-FROM transactions
-WHERE user_id = $1
-  AND date >= $2
-  AND date <= $3
-ORDER BY date DESC
+FROM transactions t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN credit_cards cc ON t.credit_card_id = cc.id
+LEFT JOIN monthly_transactions mt ON t.monthly_transactions_id = mt.id
+LEFT JOIN annual_transactions at ON t.annual_transactions_id = at.id
+LEFT JOIN installment_transactions it ON t.installment_transactions_id = it.id
+WHERE t.user_id = $1
+  AND t.date >= $2
+  AND t.date <= $3
+ORDER BY t.date DESC
 LIMIT $4 OFFSET $5
 `
 
@@ -128,19 +250,34 @@ type ListTransactionsByUserAndDateParams struct {
 }
 
 type ListTransactionsByUserAndDateRow struct {
-	ID                        uuid.UUID          `json:"id"`
-	UserID                    uuid.UUID          `json:"user_id"`
-	Name                      string             `json:"name"`
-	Date                      pgtype.Timestamptz `json:"date"`
-	Value                     pgtype.Numeric     `json:"value"`
-	CategoryID                uuid.UUID          `json:"category_id"`
-	CreditCardID              pgtype.UUID        `json:"credit_card_id"`
-	MonthlyTransactionsID     pgtype.UUID        `json:"monthly_transactions_id"`
-	AnnualTransactionsID      pgtype.UUID        `json:"annual_transactions_id"`
-	InstallmentTransactionsID pgtype.UUID        `json:"installment_transactions_id"`
-	CreatedAt                 pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt                 pgtype.Timestamptz `json:"updated_at"`
-	TotalCount                int64              `json:"total_count"`
+	ID                                 uuid.UUID          `json:"id"`
+	UserID                             uuid.UUID          `json:"user_id"`
+	Name                               string             `json:"name"`
+	Date                               pgtype.Timestamptz `json:"date"`
+	Value                              pgtype.Numeric     `json:"value"`
+	CreatedAt                          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                          pgtype.Timestamptz `json:"updated_at"`
+	CategoryID                         pgtype.UUID        `json:"category_id"`
+	CategoryTransactionType            pgtype.Int4        `json:"category_transaction_type"`
+	CategoryName                       pgtype.Text        `json:"category_name"`
+	CategoryIcon                       pgtype.Text        `json:"category_icon"`
+	CreditcardID                       pgtype.UUID        `json:"creditcard_id"`
+	CreditcardName                     pgtype.Text        `json:"creditcard_name"`
+	CreditcardFirstFourNumbers         pgtype.Text        `json:"creditcard_first_four_numbers"`
+	CreditcardCreditLimit              pgtype.Float8      `json:"creditcard_credit_limit"`
+	CreditcardCloseDay                 pgtype.Int4        `json:"creditcard_close_day"`
+	CreditcardExpireDay                pgtype.Int4        `json:"creditcard_expire_day"`
+	CreditcardBackgroundColor          pgtype.Text        `json:"creditcard_background_color"`
+	CreditcardTextColor                pgtype.Text        `json:"creditcard_text_color"`
+	MonthlyTransactionsID              pgtype.UUID        `json:"monthly_transactions_id"`
+	MonthlyTransactionsDay             pgtype.Int4        `json:"monthly_transactions_day"`
+	AnnualTransactionsID               pgtype.UUID        `json:"annual_transactions_id"`
+	AnnualTransactionsMonth            pgtype.Int4        `json:"annual_transactions_month"`
+	AnnualTransactionsDay              pgtype.Int4        `json:"annual_transactions_day"`
+	InstallmentTransactionsID          pgtype.UUID        `json:"installment_transactions_id"`
+	InstallmentTransactionsInitialDate pgtype.Timestamptz `json:"installment_transactions_initial_date"`
+	InstallmentTransactionsFinalDate   pgtype.Timestamptz `json:"installment_transactions_final_date"`
+	TotalCount                         int64              `json:"total_count"`
 }
 
 func (q *Queries) ListTransactionsByUserAndDate(ctx context.Context, arg ListTransactionsByUserAndDateParams) ([]ListTransactionsByUserAndDateRow, error) {
@@ -164,13 +301,28 @@ func (q *Queries) ListTransactionsByUserAndDate(ctx context.Context, arg ListTra
 			&i.Name,
 			&i.Date,
 			&i.Value,
-			&i.CategoryID,
-			&i.CreditCardID,
-			&i.MonthlyTransactionsID,
-			&i.AnnualTransactionsID,
-			&i.InstallmentTransactionsID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CategoryID,
+			&i.CategoryTransactionType,
+			&i.CategoryName,
+			&i.CategoryIcon,
+			&i.CreditcardID,
+			&i.CreditcardName,
+			&i.CreditcardFirstFourNumbers,
+			&i.CreditcardCreditLimit,
+			&i.CreditcardCloseDay,
+			&i.CreditcardExpireDay,
+			&i.CreditcardBackgroundColor,
+			&i.CreditcardTextColor,
+			&i.MonthlyTransactionsID,
+			&i.MonthlyTransactionsDay,
+			&i.AnnualTransactionsID,
+			&i.AnnualTransactionsMonth,
+			&i.AnnualTransactionsDay,
+			&i.InstallmentTransactionsID,
+			&i.InstallmentTransactionsInitialDate,
+			&i.InstallmentTransactionsFinalDate,
 			&i.TotalCount,
 		); err != nil {
 			return nil, err
@@ -185,22 +337,48 @@ func (q *Queries) ListTransactionsByUserAndDate(ctx context.Context, arg ListTra
 
 const listTransactionsByUserIDPaginated = `-- name: ListTransactionsByUserIDPaginated :many
 SELECT 
-    id,
-    user_id,
-    name,
-    date,
-    value,
-    category_id,
-    credit_card_id,
-    monthly_transactions_id,
-    annual_transactions_id,
-    installment_transactions_id,
-    created_at,
-    updated_at,
+    t.id,
+    t.user_id, 
+    t.name, 
+    t.date, 
+    t.value, 
+    t.created_at, 
+    t.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    mt.id as monthly_transactions_id, 
+    mt.day as monthly_transactions_day,
+
+    at.id as annual_transactions_id, 
+    at.month as annual_transactions_month, 
+    at.day as annual_transactions_day,
+
+    it.id as installment_transactions_id, 
+    it.initial_date as installment_transactions_initial_date,  
+    it.final_date as installment_transactions_final_date,
+
     COUNT(*) OVER() as total_count
-FROM transactions
-WHERE user_id = $1
-ORDER BY date DESC
+FROM transactions t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN credit_cards cc ON t.credit_card_id = cc.id
+LEFT JOIN monthly_transactions mt ON t.monthly_transactions_id = mt.id
+LEFT JOIN annual_transactions at ON t.annual_transactions_id = at.id
+LEFT JOIN installment_transactions it ON t.installment_transactions_id = it.id
+WHERE t.user_id = $1
+ORDER BY t.date DESC
 LIMIT $2 OFFSET $3
 `
 
@@ -211,19 +389,34 @@ type ListTransactionsByUserIDPaginatedParams struct {
 }
 
 type ListTransactionsByUserIDPaginatedRow struct {
-	ID                        uuid.UUID          `json:"id"`
-	UserID                    uuid.UUID          `json:"user_id"`
-	Name                      string             `json:"name"`
-	Date                      pgtype.Timestamptz `json:"date"`
-	Value                     pgtype.Numeric     `json:"value"`
-	CategoryID                uuid.UUID          `json:"category_id"`
-	CreditCardID              pgtype.UUID        `json:"credit_card_id"`
-	MonthlyTransactionsID     pgtype.UUID        `json:"monthly_transactions_id"`
-	AnnualTransactionsID      pgtype.UUID        `json:"annual_transactions_id"`
-	InstallmentTransactionsID pgtype.UUID        `json:"installment_transactions_id"`
-	CreatedAt                 pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt                 pgtype.Timestamptz `json:"updated_at"`
-	TotalCount                int64              `json:"total_count"`
+	ID                                 uuid.UUID          `json:"id"`
+	UserID                             uuid.UUID          `json:"user_id"`
+	Name                               string             `json:"name"`
+	Date                               pgtype.Timestamptz `json:"date"`
+	Value                              pgtype.Numeric     `json:"value"`
+	CreatedAt                          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                          pgtype.Timestamptz `json:"updated_at"`
+	CategoryID                         pgtype.UUID        `json:"category_id"`
+	CategoryTransactionType            pgtype.Int4        `json:"category_transaction_type"`
+	CategoryName                       pgtype.Text        `json:"category_name"`
+	CategoryIcon                       pgtype.Text        `json:"category_icon"`
+	CreditcardID                       pgtype.UUID        `json:"creditcard_id"`
+	CreditcardName                     pgtype.Text        `json:"creditcard_name"`
+	CreditcardFirstFourNumbers         pgtype.Text        `json:"creditcard_first_four_numbers"`
+	CreditcardCreditLimit              pgtype.Float8      `json:"creditcard_credit_limit"`
+	CreditcardCloseDay                 pgtype.Int4        `json:"creditcard_close_day"`
+	CreditcardExpireDay                pgtype.Int4        `json:"creditcard_expire_day"`
+	CreditcardBackgroundColor          pgtype.Text        `json:"creditcard_background_color"`
+	CreditcardTextColor                pgtype.Text        `json:"creditcard_text_color"`
+	MonthlyTransactionsID              pgtype.UUID        `json:"monthly_transactions_id"`
+	MonthlyTransactionsDay             pgtype.Int4        `json:"monthly_transactions_day"`
+	AnnualTransactionsID               pgtype.UUID        `json:"annual_transactions_id"`
+	AnnualTransactionsMonth            pgtype.Int4        `json:"annual_transactions_month"`
+	AnnualTransactionsDay              pgtype.Int4        `json:"annual_transactions_day"`
+	InstallmentTransactionsID          pgtype.UUID        `json:"installment_transactions_id"`
+	InstallmentTransactionsInitialDate pgtype.Timestamptz `json:"installment_transactions_initial_date"`
+	InstallmentTransactionsFinalDate   pgtype.Timestamptz `json:"installment_transactions_final_date"`
+	TotalCount                         int64              `json:"total_count"`
 }
 
 func (q *Queries) ListTransactionsByUserIDPaginated(ctx context.Context, arg ListTransactionsByUserIDPaginatedParams) ([]ListTransactionsByUserIDPaginatedRow, error) {
@@ -241,13 +434,28 @@ func (q *Queries) ListTransactionsByUserIDPaginated(ctx context.Context, arg Lis
 			&i.Name,
 			&i.Date,
 			&i.Value,
-			&i.CategoryID,
-			&i.CreditCardID,
-			&i.MonthlyTransactionsID,
-			&i.AnnualTransactionsID,
-			&i.InstallmentTransactionsID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CategoryID,
+			&i.CategoryTransactionType,
+			&i.CategoryName,
+			&i.CategoryIcon,
+			&i.CreditcardID,
+			&i.CreditcardName,
+			&i.CreditcardFirstFourNumbers,
+			&i.CreditcardCreditLimit,
+			&i.CreditcardCloseDay,
+			&i.CreditcardExpireDay,
+			&i.CreditcardBackgroundColor,
+			&i.CreditcardTextColor,
+			&i.MonthlyTransactionsID,
+			&i.MonthlyTransactionsDay,
+			&i.AnnualTransactionsID,
+			&i.AnnualTransactionsMonth,
+			&i.AnnualTransactionsDay,
+			&i.InstallmentTransactionsID,
+			&i.InstallmentTransactionsInitialDate,
+			&i.InstallmentTransactionsFinalDate,
 			&i.TotalCount,
 		); err != nil {
 			return nil, err

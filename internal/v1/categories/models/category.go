@@ -27,3 +27,12 @@ func (c Category) ToResponse() CategoryResponse {
 		UpdatedAt:       c.UpdatedAt,
 	}
 }
+
+func (c Category) ToShortResponse() ShortCategoryReponse {
+	return ShortCategoryReponse{
+		ID:              c.ID,
+		TransactionType: c.TransactionType,
+		Name:            c.Name,
+		Icon:            c.Icon,
+	}
+}

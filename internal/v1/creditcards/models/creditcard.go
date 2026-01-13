@@ -34,3 +34,16 @@ func (c CreditCard) ToResponse() CreditCardResponse {
 		UpdatedAt:        c.UpdatedAt,
 	}
 }
+
+func (c CreditCard) ToShortResponse() ShortCreditCardResponse {
+	return ShortCreditCardResponse{
+		ID:               c.ID,
+		Name:             c.Name,
+		FirstFourNumbers: c.FirstFourNumbers,
+		Limit:            c.Limit,
+		CloseDay:         c.CloseDay,
+		ExpireDay:        c.ExpireDay,
+		BackgroundColor:  c.BackgroundColor,
+		TextColor:        c.TextColor,
+	}
+}

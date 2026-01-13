@@ -9,10 +9,10 @@ import (
 )
 
 type TransactionsRepository interface {
-	Create(context context.Context, transaction CreateTransaction) (Transaction, []errors.ApiError)
+	Create(context context.Context, transaction CreateTransaction) (ShortTransaction, []errors.ApiError)
 	Read(context context.Context, params models.PaginatedParams) ([]Transaction, int64, []errors.ApiError)
 	ReadInToDates(context context.Context, params models.PaginatedParamsWithDateRange) ([]Transaction, int64, []errors.ApiError)
 	ReadById(context context.Context, id uuid.UUID) (Transaction, []errors.ApiError)
-	Update(context context.Context, transaction Transaction) (Transaction, []errors.ApiError)
+	Update(context context.Context, transaction Transaction) (ShortTransaction, []errors.ApiError)
 	Delete(context context.Context, id uuid.UUID) []errors.ApiError
 }

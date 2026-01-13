@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"math/big"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -30,22 +32,17 @@ func UUIDToPgTypeUUID(u *uuid.UUID) pgtype.UUID {
 }
 
 func Float64ToNumeric(f float64) (pgtype.Numeric, error) {
-	var pgtypeNumeric pgtype.Numeric
-	err := pgtypeNumeric.Scan(f)
-	if err != nil {
-		return pgtype.Numeric{}, err
-	}
-	return pgtypeNumeric, nil
+	return pgtype.Numeric{
+		Int:   big.NewInt(int64(f)),
+		Exp:   0,
+		Valid: true,
+	}, nil
 }
 
-func NumericToFloat64(n pgtype.Numeric) (float64, error) {
+func NumericToFloat64(n pgtype.Numeric) float64 {
 	valuePgtype, err := n.Float64Value()
-
 	if err != nil {
-		return 0, err
+		return 0
 	}
-
-	value := valuePgtype.Float64
-
-	return value, nil
+	return valuePgtype.Float64
 }

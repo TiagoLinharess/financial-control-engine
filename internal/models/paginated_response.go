@@ -1,8 +1,7 @@
 package models
 
 type PaginatedResponse[T any] struct {
-	Items      []T   `json:"items"`
-	TotalCount int64 `json:"total_count"`
-	Page       int   `json:"page"`
-	PageSize   int   `json:"page_size"`
+	Items     []T   `json:"items"`
+	PageCount int64 `json:"page_count"`
+	Page      int64 `json:"page"`
 }

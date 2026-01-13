@@ -12,7 +12,7 @@ type CreateTransaction struct {
 	Date                      time.Time
 	Value                     float64
 	CategoryID                uuid.UUID
-	CreditCardID              *uuid.UUID
+	CreditcardID              *uuid.UUID
 	MonthlyTransactionsID     *uuid.UUID
 	AnnualTransactionsID      *uuid.UUID
 	InstallmentTransactionsID *uuid.UUID
