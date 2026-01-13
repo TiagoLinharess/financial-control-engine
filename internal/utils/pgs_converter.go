@@ -31,12 +31,21 @@ func UUIDToPgTypeUUID(u *uuid.UUID) pgtype.UUID {
 	}
 }
 
-func Float64ToNumeric(f float64) (pgtype.Numeric, error) {
+func Float64ToNumeric(f float64) pgtype.Numeric {
+	bigFloat := big.NewFloat(f)
+	bigInt := new(big.Int)
+	exp := int32(0)
+
+	scale := big.NewFloat(100)
+	bigFloat.Mul(bigFloat, scale)
+	bigFloat.Int(bigInt)
+	exp = -2
+
 	return pgtype.Numeric{
-		Int:   big.NewInt(int64(f)),
-		Exp:   0,
+		Int:   bigInt,
+		Exp:   exp,
 		Valid: true,
-	}, nil
+	}
 }
 
 func NumericToFloat64(n pgtype.Numeric) float64 {

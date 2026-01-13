@@ -24,11 +24,7 @@ func NewTransactionsRepository(store st.TransactionsStore) tm.TransactionsReposi
 }
 
 func (t TransactionsRepository) Create(context c.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError) {
-	value, err := u.Float64ToNumeric(transaction.Value)
-
-	if err != nil {
-		return tm.ShortTransaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
-	}
+	value := u.Float64ToNumeric(transaction.Value)
 
 	param := pgs.CreateTransactionParams{
 		UserID:                    transaction.UserID,
@@ -125,11 +121,7 @@ func (t TransactionsRepository) ReadById(context c.Context, id uuid.UUID) (tm.Tr
 }
 
 func (t TransactionsRepository) Update(context c.Context, transaction tm.Transaction) (tm.ShortTransaction, []e.ApiError) {
-	value, err := u.Float64ToNumeric(transaction.Value)
-
-	if err != nil {
-		return tm.ShortTransaction{}, []e.ApiError{e.StoreError{Message: err.Error()}}
-	}
+	value := u.Float64ToNumeric(transaction.Value)
 
 	params := pgs.UpdateTransactionParams{
 		ID:                        transaction.ID,
