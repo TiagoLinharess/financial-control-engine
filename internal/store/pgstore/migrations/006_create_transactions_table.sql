@@ -6,6 +6,7 @@ CREATE TABLE transactions (
     name VARCHAR(255) NOT NULL,
     date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     value NUMERIC(15, 2) NOT NULL,
+    paid BOOLEAN NOT NULL DEFAULT false,
     category_id UUID NOT NULL,
     credit_card_id UUID,
     monthly_transactions_id UUID,

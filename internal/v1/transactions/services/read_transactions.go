@@ -54,7 +54,7 @@ func (t TransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[tm.Tran
 
 	return m.PaginatedResponse[tm.TransactionResponse]{
 		Items:     transactionsResponse,
-		PageCount: count / limit,
+		PageCount: (count / limit) + 1,
 		Page:      page,
 	}, http.StatusOK, nil
 }

@@ -4,15 +4,16 @@ INSERT INTO transactions (
     name,
     date,
     value,
+    paid,
     category_id,
     credit_card_id,
     monthly_transactions_id,
     annual_transactions_id,
     installment_transactions_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING id, name, date, value, created_at, updated_at;
+RETURNING id, name, date, value, paid, created_at, updated_at;
 
 -- name: GetTransactionByID :one
 SELECT 
@@ -20,7 +21,8 @@ SELECT
     t.user_id, 
     t.name, 
     t.date, 
-    t.value, 
+    t.value,
+    t.paid,
     t.created_at, 
     t.updated_at,
 
@@ -62,7 +64,8 @@ SELECT
     t.user_id, 
     t.name, 
     t.date, 
-    t.value, 
+    t.value,
+    t.paid, 
     t.created_at, 
     t.updated_at,
 
@@ -108,7 +111,8 @@ SELECT
     t.user_id, 
     t.name, 
     t.date, 
-    t.value, 
+    t.value,
+    t.paid, 
     t.created_at, 
     t.updated_at,
 
@@ -156,14 +160,22 @@ SET
     name = $2,
     date = $3,
     value = $4,
-    category_id = $5,
-    credit_card_id = $6,
-    monthly_transactions_id = $7,
-    annual_transactions_id = $8,
-    installment_transactions_id = $9,
+    paid = $5,
+    category_id = $6,
+    credit_card_id = $7,
+    monthly_transactions_id = $8,
+    annual_transactions_id = $9,
+    installment_transactions_id = $10,
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;
+
+-- name: PayTransaction :exec
+UPDATE transactions
+SET
+    paid = $2,
+    updated_at = NOW()
+WHERE id = $1;
 
 -- name: DeleteTransaction :exec
 DELETE FROM transactions

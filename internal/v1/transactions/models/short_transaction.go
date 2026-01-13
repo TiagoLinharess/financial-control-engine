@@ -13,6 +13,7 @@ type ShortTransaction struct {
 	Name      string
 	Date      time.Time
 	Value     float64
+	Paid      bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -23,6 +24,7 @@ func (t ShortTransaction) ToResponse(category cm.ShortCategoryReponse, creditcar
 		Name:                   t.Name,
 		Date:                   t.Date,
 		Value:                  t.Value,
+		Paid:                   t.Paid,
 		Category:               category,
 		Creditcard:             creditcard,
 		MonthlyTransaction:     nil,

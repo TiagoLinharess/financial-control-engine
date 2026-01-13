@@ -11,6 +11,7 @@ type CreateTransaction struct {
 	Name                      string
 	Date                      time.Time
 	Value                     float64
+	Paid                      bool
 	CategoryID                uuid.UUID
 	CreditcardID              *uuid.UUID
 	MonthlyTransactionsID     *uuid.UUID

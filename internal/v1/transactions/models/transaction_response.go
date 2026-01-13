@@ -13,6 +13,7 @@ type TransactionResponse struct {
 	Name                   string                      `json:"name"`
 	Date                   time.Time                   `json:"date"`
 	Value                  float64                     `json:"value"`
+	Paid                   bool                        `json:"paid"`
 	Category               cm.ShortCategoryReponse     `json:"category"`
 	Creditcard             *cr.ShortCreditCardResponse `json:"creditcard"`
 	MonthlyTransaction     *uuid.UUID                  `json:"monthly_transaction,omitempty"`

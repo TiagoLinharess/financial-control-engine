@@ -18,15 +18,16 @@ INSERT INTO transactions (
     name,
     date,
     value,
+    paid,
     category_id,
     credit_card_id,
     monthly_transactions_id,
     annual_transactions_id,
     installment_transactions_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING id, name, date, value, created_at, updated_at
+RETURNING id, name, date, value, paid, created_at, updated_at
 `
 
 type CreateTransactionParams struct {
@@ -34,6 +35,7 @@ type CreateTransactionParams struct {
 	Name                      string             `json:"name"`
 	Date                      pgtype.Timestamptz `json:"date"`
 	Value                     pgtype.Numeric     `json:"value"`
+	Paid                      bool               `json:"paid"`
 	CategoryID                uuid.UUID          `json:"category_id"`
 	CreditCardID              pgtype.UUID        `json:"credit_card_id"`
 	MonthlyTransactionsID     pgtype.UUID        `json:"monthly_transactions_id"`
@@ -46,6 +48,7 @@ type CreateTransactionRow struct {
 	Name      string             `json:"name"`
 	Date      pgtype.Timestamptz `json:"date"`
 	Value     pgtype.Numeric     `json:"value"`
+	Paid      bool               `json:"paid"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
@@ -56,6 +59,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		arg.Name,
 		arg.Date,
 		arg.Value,
+		arg.Paid,
 		arg.CategoryID,
 		arg.CreditCardID,
 		arg.MonthlyTransactionsID,
@@ -68,6 +72,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.Name,
 		&i.Date,
 		&i.Value,
+		&i.Paid,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -90,7 +95,8 @@ SELECT
     t.user_id, 
     t.name, 
     t.date, 
-    t.value, 
+    t.value,
+    t.paid,
     t.created_at, 
     t.updated_at,
 
@@ -133,6 +139,7 @@ type GetTransactionByIDRow struct {
 	Name                               string             `json:"name"`
 	Date                               pgtype.Timestamptz `json:"date"`
 	Value                              pgtype.Numeric     `json:"value"`
+	Paid                               bool               `json:"paid"`
 	CreatedAt                          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt                          pgtype.Timestamptz `json:"updated_at"`
 	CategoryID                         pgtype.UUID        `json:"category_id"`
@@ -166,6 +173,7 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (GetTran
 		&i.Name,
 		&i.Date,
 		&i.Value,
+		&i.Paid,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.CategoryID,
@@ -198,7 +206,8 @@ SELECT
     t.user_id, 
     t.name, 
     t.date, 
-    t.value, 
+    t.value,
+    t.paid, 
     t.created_at, 
     t.updated_at,
 
@@ -255,6 +264,7 @@ type ListTransactionsByUserAndDateRow struct {
 	Name                               string             `json:"name"`
 	Date                               pgtype.Timestamptz `json:"date"`
 	Value                              pgtype.Numeric     `json:"value"`
+	Paid                               bool               `json:"paid"`
 	CreatedAt                          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt                          pgtype.Timestamptz `json:"updated_at"`
 	CategoryID                         pgtype.UUID        `json:"category_id"`
@@ -301,6 +311,7 @@ func (q *Queries) ListTransactionsByUserAndDate(ctx context.Context, arg ListTra
 			&i.Name,
 			&i.Date,
 			&i.Value,
+			&i.Paid,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CategoryID,
@@ -341,7 +352,8 @@ SELECT
     t.user_id, 
     t.name, 
     t.date, 
-    t.value, 
+    t.value,
+    t.paid, 
     t.created_at, 
     t.updated_at,
 
@@ -394,6 +406,7 @@ type ListTransactionsByUserIDPaginatedRow struct {
 	Name                               string             `json:"name"`
 	Date                               pgtype.Timestamptz `json:"date"`
 	Value                              pgtype.Numeric     `json:"value"`
+	Paid                               bool               `json:"paid"`
 	CreatedAt                          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt                          pgtype.Timestamptz `json:"updated_at"`
 	CategoryID                         pgtype.UUID        `json:"category_id"`
@@ -434,6 +447,7 @@ func (q *Queries) ListTransactionsByUserIDPaginated(ctx context.Context, arg Lis
 			&i.Name,
 			&i.Date,
 			&i.Value,
+			&i.Paid,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.CategoryID,
@@ -468,20 +482,39 @@ func (q *Queries) ListTransactionsByUserIDPaginated(ctx context.Context, arg Lis
 	return items, nil
 }
 
+const payTransaction = `-- name: PayTransaction :exec
+UPDATE transactions
+SET
+    paid = $2,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type PayTransactionParams struct {
+	ID   uuid.UUID `json:"id"`
+	Paid bool      `json:"paid"`
+}
+
+func (q *Queries) PayTransaction(ctx context.Context, arg PayTransactionParams) error {
+	_, err := q.db.Exec(ctx, payTransaction, arg.ID, arg.Paid)
+	return err
+}
+
 const updateTransaction = `-- name: UpdateTransaction :one
 UPDATE transactions
 SET
     name = $2,
     date = $3,
     value = $4,
-    category_id = $5,
-    credit_card_id = $6,
-    monthly_transactions_id = $7,
-    annual_transactions_id = $8,
-    installment_transactions_id = $9,
+    paid = $5,
+    category_id = $6,
+    credit_card_id = $7,
+    monthly_transactions_id = $8,
+    annual_transactions_id = $9,
+    installment_transactions_id = $10,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, user_id, name, date, value, category_id, credit_card_id, monthly_transactions_id, annual_transactions_id, installment_transactions_id, created_at, updated_at
+RETURNING id, user_id, name, date, value, paid, category_id, credit_card_id, monthly_transactions_id, annual_transactions_id, installment_transactions_id, created_at, updated_at
 `
 
 type UpdateTransactionParams struct {
@@ -489,6 +522,7 @@ type UpdateTransactionParams struct {
 	Name                      string             `json:"name"`
 	Date                      pgtype.Timestamptz `json:"date"`
 	Value                     pgtype.Numeric     `json:"value"`
+	Paid                      bool               `json:"paid"`
 	CategoryID                uuid.UUID          `json:"category_id"`
 	CreditCardID              pgtype.UUID        `json:"credit_card_id"`
 	MonthlyTransactionsID     pgtype.UUID        `json:"monthly_transactions_id"`
@@ -502,6 +536,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		arg.Name,
 		arg.Date,
 		arg.Value,
+		arg.Paid,
 		arg.CategoryID,
 		arg.CreditCardID,
 		arg.MonthlyTransactionsID,
@@ -515,6 +550,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.Name,
 		&i.Date,
 		&i.Value,
+		&i.Paid,
 		&i.CategoryID,
 		&i.CreditCardID,
 		&i.MonthlyTransactionsID,

@@ -12,6 +12,7 @@ type TransactionRequest struct {
 	Name                      string     `json:"name"`
 	Date                      time.Time  `json:"date"`
 	Value                     float64    `json:"value"`
+	Paid                      bool       `json:"paid"`
 	CategoryID                uuid.UUID  `json:"category_id"`
 	CreditcardID              *uuid.UUID `json:"creditcard_id,omitempty"`
 	MonthlyTransactionsID     *uuid.UUID `json:"monthly_transactions_id,omitempty"`
@@ -43,6 +44,7 @@ func (t TransactionRequest) ToCreateModel(userID uuid.UUID) CreateTransaction {
 		Name:                      t.Name,
 		Date:                      t.Date,
 		Value:                     t.Value,
+		Paid:                      t.Paid,
 		CategoryID:                t.CategoryID,
 		CreditcardID:              t.CreditcardID,
 		MonthlyTransactionsID:     t.MonthlyTransactionsID,

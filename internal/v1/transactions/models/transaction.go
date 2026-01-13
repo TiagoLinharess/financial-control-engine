@@ -14,6 +14,7 @@ type Transaction struct {
 	Name                   string
 	Date                   time.Time
 	Value                  float64
+	Paid                   bool
 	Category               cm.ShortCategory
 	Creditcard             *cr.ShortCreditCard
 	MonthlyTransaction     *uuid.UUID
@@ -34,6 +35,7 @@ func (t Transaction) ToResponse() TransactionResponse {
 		Name:                   t.Name,
 		Date:                   t.Date,
 		Value:                  t.Value,
+		Paid:                   t.Paid,
 		Category:               t.Category.ToShortResponse(),
 		Creditcard:             creditcard,
 		MonthlyTransaction:     nil,
