@@ -116,12 +116,13 @@ WHERE user_id = $1
   AND date >= $2
   AND date <= $3
 ORDER BY date DESC
-LIMIT $3 OFFSET $4
+LIMIT $4 OFFSET $5
 `
 
 type ListTransactionsByUserAndDateParams struct {
 	UserID uuid.UUID          `json:"user_id"`
 	Date   pgtype.Timestamptz `json:"date"`
+	Date_2 pgtype.Timestamptz `json:"date_2"`
 	Limit  int32              `json:"limit"`
 	Offset int32              `json:"offset"`
 }
@@ -146,6 +147,7 @@ func (q *Queries) ListTransactionsByUserAndDate(ctx context.Context, arg ListTra
 	rows, err := q.db.Query(ctx, listTransactionsByUserAndDate,
 		arg.UserID,
 		arg.Date,
+		arg.Date_2,
 		arg.Limit,
 		arg.Offset,
 	)

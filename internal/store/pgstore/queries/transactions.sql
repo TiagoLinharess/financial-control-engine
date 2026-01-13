@@ -48,7 +48,7 @@ WHERE user_id = $1
   AND date >= $2
   AND date <= $3
 ORDER BY date DESC
-LIMIT $3 OFFSET $4;
+LIMIT $4 OFFSET $5;
 
 -- name: UpdateTransaction :one
 UPDATE transactions
