@@ -123,16 +123,39 @@ func (t TransactionsService) readCreditcard(ctx *gin.Context, userID uuid.UUID, 
 	return &creditcard, http.StatusOK, nil
 }
 
-func (t TransactionsService) Delete(ctx *gin.Context) []e.ApiError {
-	panic("unimplemented")
-}
+func (t TransactionsService) read(ctx *gin.Context) (tm.Transaction, int, []e.ApiError) {
+	transactionNotFoundErr := []e.ApiError{e.NotFoundError{Message: e.TransactionNotFound}}
+	userID, errs := u.ReadUserIdFromCookie(ctx)
 
-func (t TransactionsService) ReadById(ctx *gin.Context) (tm.TransactionResponse, int, []e.ApiError) {
-	panic("unimplemented")
-}
+	if len(errs) > 0 {
+		return tm.Transaction{}, http.StatusUnauthorized, errs
+	}
 
-func (t TransactionsService) ReadInToDates(ctx *gin.Context) (m.PaginatedResponse[tm.TransactionResponse], int, []e.ApiError) {
-	panic("unimplemented")
+	transactionIdString := ctx.Param("id")
+
+	transactionId, err := uuid.Parse(transactionIdString)
+
+	if err != nil {
+		return tm.Transaction{}, http.StatusBadRequest, errs
+	}
+
+	transaction, errs := t.transactionsRepository.ReadById(ctx, transactionId)
+
+	if len(errs) > 0 {
+		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {
+			return err.String() == string(st.ErrNoRows)
+		})
+		if isNotFoundErr {
+			return tm.Transaction{}, http.StatusNotFound, transactionNotFoundErr
+		}
+		return tm.Transaction{}, http.StatusInternalServerError, errs
+	}
+
+	if transaction.UserID != userID {
+		return tm.Transaction{}, http.StatusNotFound, transactionNotFoundErr
+	}
+
+	return transaction, http.StatusOK, nil
 }
 
 func (t TransactionsService) Update(ctx *gin.Context) (tm.TransactionResponse, int, []e.ApiError) {

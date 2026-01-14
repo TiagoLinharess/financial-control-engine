@@ -3,8 +3,9 @@ package errors
 type NotFoundErrorType string
 
 const (
-	CategoryNotFound   NotFoundErrorType = "Category not found"
-	CreditcardNotFound NotFoundErrorType = "Credit card not found"
+	CategoryNotFound    NotFoundErrorType = "Category not found"
+	CreditcardNotFound  NotFoundErrorType = "Credit card not found"
+	TransactionNotFound NotFoundErrorType = "Transaction not found"
 )
 
 type NotFoundError struct {

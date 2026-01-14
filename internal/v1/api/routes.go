@@ -25,5 +25,9 @@ func (a *Api) RegisterRoutes() {
 	{
 		trasactions.POST("/", a.transactionsController.Create)
 		trasactions.GET("/", a.transactionsController.Read)
+		trasactions.GET("/:id", a.transactionsController.ReadById)
+		trasactions.PUT("/:id", a.transactionsController.Update)
+		trasactions.DELETE("/:id", a.transactionsController.Delete)
+		trasactions.PUT("/pay/:id", a.transactionsController.Pay)
 	}
 }

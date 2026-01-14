@@ -14,4 +14,5 @@ type TransactionsStore interface {
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (pgstore.GetTransactionByIDRow, error)
 	UpdateTransaction(ctx context.Context, arg pgstore.UpdateTransactionParams) (pgstore.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uuid.UUID) error
+	PayTransaction(ctx context.Context, arg pgstore.PayTransactionParams) error
 }

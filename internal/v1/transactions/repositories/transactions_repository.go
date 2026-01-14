@@ -165,6 +165,21 @@ func (t TransactionsRepository) Delete(context c.Context, id uuid.UUID) []e.ApiE
 	return nil
 }
 
+func (t TransactionsRepository) Pay(context c.Context, id uuid.UUID, paid bool) []e.ApiError {
+	params := pgs.PayTransactionParams{
+		ID:   id,
+		Paid: paid,
+	}
+
+	err := t.store.PayTransaction(context, params)
+
+	if err != nil {
+		return []e.ApiError{e.StoreError{Message: err.Error()}}
+	}
+
+	return nil
+}
+
 func storeDateToStore(transaction pgs.ListTransactionsByUserAndDateRow) pgs.GetTransactionByIDRow {
 	return storePaginatedToStore(pgs.ListTransactionsByUserIDPaginatedRow(transaction))
 }

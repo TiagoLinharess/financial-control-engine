@@ -15,4 +15,5 @@ type TransactionsRepository interface {
 	ReadById(context context.Context, id uuid.UUID) (Transaction, []errors.ApiError)
 	Update(context context.Context, transaction Transaction) (ShortTransaction, []errors.ApiError)
 	Delete(context context.Context, id uuid.UUID) []errors.ApiError
+	Pay(context context.Context, id uuid.UUID, paid bool) []errors.ApiError
 }
