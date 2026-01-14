@@ -69,6 +69,10 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 		return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: "Transactions classified as credit transactions must have an associated credit card."}}
 	}
 
+	if request.CreditcardID != nil && category.TransactionType != m.Credit {
+		return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: "Only transactions classified as credit transactions can have an associated credit card."}}
+	}
+
 	// TODO: validar assim como no cartão de crédito, as despesas mensais, anuais e parceladas
 
 	return tm.TransactionRelations{
@@ -156,8 +160,4 @@ func (t TransactionsService) read(ctx *gin.Context) (tm.Transaction, int, []e.Ap
 	}
 
 	return transaction, http.StatusOK, nil
-}
-
-func (t TransactionsService) Update(ctx *gin.Context) (tm.TransactionResponse, int, []e.ApiError) {
-	panic("unimplemented")
 }

@@ -125,6 +125,11 @@ func (t TransactionsRepository) ReadById(context c.Context, id uuid.UUID) (tm.Tr
 func (t TransactionsRepository) Update(context c.Context, transaction tm.Transaction) (tm.ShortTransaction, []e.ApiError) {
 	value := u.Float64ToNumeric(transaction.Value)
 
+	var creditCardID pgtype.UUID
+	if transaction.Creditcard != nil {
+		creditCardID = u.UUIDToPgTypeUUID(&transaction.Creditcard.ID)
+	}
+
 	params := pgs.UpdateTransactionParams{
 		ID:                        transaction.ID,
 		Name:                      transaction.Name,
@@ -132,7 +137,7 @@ func (t TransactionsRepository) Update(context c.Context, transaction tm.Transac
 		Value:                     value,
 		Paid:                      transaction.Paid,
 		CategoryID:                transaction.Category.ID,
-		CreditCardID:              u.UUIDToPgTypeUUID(&transaction.Creditcard.ID),
+		CreditCardID:              creditCardID,
 		MonthlyTransactionsID:     u.UUIDToPgTypeUUID(transaction.MonthlyTransaction),
 		AnnualTransactionsID:      u.UUIDToPgTypeUUID(transaction.AnnualTransaction),
 		InstallmentTransactionsID: u.UUIDToPgTypeUUID(transaction.InstallmentTransaction),
