@@ -71,6 +71,10 @@ func (t TransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[tm.Tran
 		responses, count, errs = t.transactionsRepository.Read(ctx, paginatedParams)
 	}
 
+	if len(errs) > 0 {
+		return m.PaginatedResponse[tm.TransactionResponse]{}, http.StatusInternalServerError, errs
+	}
+
 	transactionsResponse := make([]tm.TransactionResponse, 0, len(responses))
 
 	for _, transaction := range responses {
