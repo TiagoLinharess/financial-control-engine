@@ -1,6 +1,7 @@
 package models
 
 import (
+	"financialcontrol/internal/constants"
 	"financialcontrol/internal/models/errors"
 	"financialcontrol/internal/utils"
 	"time"
@@ -24,16 +25,19 @@ func (t TransactionRequest) Validate() []errors.ApiError {
 	errs := make([]errors.ApiError, 0)
 
 	if utils.IsBlank(t.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: "Name must not be empty"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionNameEmptyMsg})
 	}
 
 	if len(t.Name) > 255 || len(t.Name) < 2 {
-		errs = append(errs, errors.InvalidFieldError{Message: "Name lenght must be between 2 and 255 characters"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionNameInvalidCharsCountMsg})
 	}
 
 	if t.Value < 0 || t.Value >= 1000000000000000.00 {
-		errs = append(errs, errors.InvalidFieldError{Message: "Value must be less than 0 or greater than 999999999999999.99"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionAmountInvalidMsg})
 	}
+
+	// TODO: validate date
+	// TODO: validate field sizes
 
 	return errs
 }

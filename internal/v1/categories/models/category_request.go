@@ -1,6 +1,7 @@
 package models
 
 import (
+	"financialcontrol/internal/constants"
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/models/errors"
 	"financialcontrol/internal/utils"
@@ -17,17 +18,17 @@ type CategoryRequest struct {
 func (c CategoryRequest) Validate() []errors.ApiError {
 	errs := make([]errors.ApiError, 0)
 	if c.TransactionType == nil {
-		errs = append(errs, errors.InvalidFieldError{Message: "Transaction id must not be empty"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryTransactionTypeEmptyMsg})
 	} else if !c.TransactionType.IsValid() {
-		errs = append(errs, errors.InvalidFieldError{Message: "Transaction id must be valid"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryTransactionTypeMsg})
 	}
 
 	if utils.IsBlank(c.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: "Name must not be empty"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryNameEmptyMsg})
 	}
 
 	if utils.IsBlank(c.Icon) {
-		errs = append(errs, errors.InvalidFieldError{Message: "Icon must not be empty"})
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryIconEmptyMsg})
 	}
 
 	return errs

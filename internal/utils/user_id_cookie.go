@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"financialcontrol/internal/constants"
 	"financialcontrol/internal/models/errors"
 
 	"github.com/gin-gonic/gin"
@@ -8,7 +9,7 @@ import (
 )
 
 func ReadUserIdFromCookie(ctx *gin.Context) (uuid.UUID, []errors.ApiError) {
-	userIDString, err := ctx.Cookie("user_id")
+	userIDString, err := ctx.Cookie(constants.UserID)
 
 	if err != nil {
 		return uuid.UUID{}, []errors.ApiError{errors.UnauthorizedError{Message: errors.UserIDNotFound}}

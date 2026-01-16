@@ -1,12 +1,12 @@
 package services
 
 import (
+	"financialcontrol/internal/constants"
 	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
 	u "financialcontrol/internal/utils"
 	tm "financialcontrol/internal/v1/transactions/models"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,18 +19,18 @@ func (t TransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[tm.Tran
 		return m.PaginatedResponse[tm.TransactionResponse]{}, http.StatusUnauthorized, errs
 	}
 
-	limitString := ctx.DefaultQuery("limit", "10")
-	limit, err := strconv.ParseInt(limitString, 10, 64)
+	limitString := ctx.DefaultQuery(constants.LimitText, constants.LimitDefaultString)
+	limit, err := u.StringToInt64(limitString)
 
-	if limit > 10 || err != nil {
-		limit = 10
+	if limit > constants.LimitDefault || err != nil {
+		limit = constants.LimitDefault
 	}
 
-	pageString := ctx.DefaultQuery("page", "1")
-	page, err := strconv.ParseInt(pageString, 10, 64)
+	pageString := ctx.DefaultQuery(constants.PageText, constants.PageDefaultString)
+	page, err := u.StringToInt64(pageString)
 
 	if err != nil {
-		return m.PaginatedResponse[tm.TransactionResponse]{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: "Invalid page param"}}
+		return m.PaginatedResponse[tm.TransactionResponse]{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.InvalidPageParam}}
 	}
 
 	if page == 0 {
@@ -39,8 +39,8 @@ func (t TransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[tm.Tran
 
 	offset := limit * (page - 1)
 
-	startDateString := ctx.DefaultQuery("start_date", "")
-	endDateString := ctx.DefaultQuery("end_date", "")
+	startDateString := ctx.DefaultQuery(constants.StartDateText, constants.EmptyString)
+	endDateString := ctx.DefaultQuery(constants.EndDateText, constants.EmptyString)
 
 	var responses []tm.Transaction
 	var count int64
@@ -93,13 +93,13 @@ func (t TransactionsService) readDatesFrom(startDateString string, endDateString
 	startDate, err := time.Parse(time.DateOnly, startDateString)
 
 	if err != nil {
-		errs = append(errs, e.CustomError{Message: "Invalid start date"})
+		errs = append(errs, e.CustomError{Message: constants.InvalidStartDate})
 	}
 
 	endDate, err := time.Parse(time.DateOnly, endDateString)
 
 	if err != nil {
-		errs = append(errs, e.CustomError{Message: "Invalid end date"})
+		errs = append(errs, e.CustomError{Message: constants.InvalidEndDate})
 	}
 
 	return startDate, endDate, errs

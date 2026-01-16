@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
 	s "financialcontrol/internal/store"
 	u "financialcontrol/internal/utils"
@@ -27,7 +28,7 @@ func (c CreditCardsService) read(ctx *gin.Context) (cm.CreditCard, int, []e.ApiE
 		return cm.CreditCard{}, http.StatusUnauthorized, errs
 	}
 
-	creditcardIdString := ctx.Param("id")
+	creditcardIdString := ctx.Param(constants.ID)
 
 	creditcardId, err := uuid.Parse(creditcardIdString)
 

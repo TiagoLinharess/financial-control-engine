@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/constants"
 	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
 	st "financialcontrol/internal/store"
@@ -66,11 +67,11 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 	}
 
 	if request.CreditcardID == nil && category.TransactionType == m.Credit {
-		return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: "Transactions classified as credit transactions must have an associated credit card."}}
+		return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.TransactionCreditWithoutCreditcardMsg}}
 	}
 
 	if request.CreditcardID != nil && category.TransactionType != m.Credit {
-		return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: "Only transactions classified as credit transactions can have an associated credit card."}}
+		return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.TransactionDebitOrIncomeWithCreditcardMsg}}
 	}
 
 	// TODO: validar assim como no cartão de crédito, as despesas mensais, anuais e parceladas
@@ -137,7 +138,7 @@ func (t TransactionsService) read(ctx *gin.Context) (tm.Transaction, int, []e.Ap
 		return tm.Transaction{}, http.StatusUnauthorized, errs
 	}
 
-	transactionIdString := ctx.Param("id")
+	transactionIdString := ctx.Param(constants.ID)
 
 	transactionId, err := uuid.Parse(transactionIdString)
 

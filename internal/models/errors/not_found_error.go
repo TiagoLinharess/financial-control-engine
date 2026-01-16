@@ -1,11 +1,13 @@
 package errors
 
+import "financialcontrol/internal/constants"
+
 type NotFoundErrorType string
 
 const (
-	CategoryNotFound    NotFoundErrorType = "Category not found"
-	CreditcardNotFound  NotFoundErrorType = "Credit card not found"
-	TransactionNotFound NotFoundErrorType = "Transaction not found"
+	CategoryNotFound    NotFoundErrorType = constants.CategoryNotFoundMsg
+	CreditcardNotFound  NotFoundErrorType = constants.CreditcardNotFoundMsg
+	TransactionNotFound NotFoundErrorType = constants.TransactionNotFoundMsg
 )
 
 type NotFoundError struct {
@@ -14,4 +16,8 @@ type NotFoundError struct {
 
 func (n NotFoundError) String() string {
 	return string(n.Message)
+}
+
+func (n NotFoundError) SystemMessage() (string, string) {
+	return constants.NotFoundErrorSystemMsg, string(n.Message)
 }

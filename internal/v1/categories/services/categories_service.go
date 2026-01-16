@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
 	st "financialcontrol/internal/store"
 	u "financialcontrol/internal/utils"
@@ -27,7 +28,7 @@ func (s CategoriesService) read(ctx *gin.Context) (cm.Category, int, []e.ApiErro
 		return cm.Category{}, http.StatusUnauthorized, errs
 	}
 
-	categoryIDString := ctx.Param("id")
+	categoryIDString := ctx.Param(constants.ID)
 
 	categoryID, err := uuid.Parse(categoryIDString)
 
