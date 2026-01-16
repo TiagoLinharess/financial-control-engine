@@ -74,6 +74,8 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 	}
 
 	// TODO: validar assim como no cartão de crédito, as despesas mensais, anuais e parceladas
+	// TODO: validar se o cartão de crédito tem limite suficiente para a transação
+	// TODO: remover strings hardcoded
 
 	return tm.TransactionRelations{
 		UserID:             userID,

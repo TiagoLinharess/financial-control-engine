@@ -14,6 +14,8 @@ func (s CategoriesService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 		return statusCode, errs
 	}
 
+	// TODO: check if category has transactions associated
+
 	errs = s.repository.Delete(ctx, category.ID)
 
 	if len(errs) > 0 {

@@ -14,6 +14,8 @@ func (c CreditCardsService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 		return status, err
 	}
 
+	// TODO: check if creditcard has transactions associated
+
 	err = c.repository.Delete(ctx, creditcard.ID)
 
 	if len(err) > 0 {
