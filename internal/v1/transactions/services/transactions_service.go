@@ -55,8 +55,9 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 	}
 
 	var creditcardResponse *cr.ShortCreditCardResponse
+	var creditcard *cr.CreditCard
 	if request.CreditcardID != nil {
-		creditcard, status, errs := t.readCreditcard(ctx, userID, *request.CreditcardID)
+		creditcard, status, errs = t.readCreditcard(ctx, userID, *request.CreditcardID)
 
 		if len(errs) > 0 {
 			return tm.TransactionRelations{}, status, errs
@@ -76,7 +77,6 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 
 	// TODO: validar assim como no cartão de crédito, as despesas mensais, anuais e parceladas
 	// TODO: validar se o cartão de crédito tem limite suficiente para a transação
-	// TODO: remover strings hardcoded
 
 	return tm.TransactionRelations{
 		UserID:             userID,

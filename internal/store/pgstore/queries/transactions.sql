@@ -177,6 +177,43 @@ SET
     updated_at = NOW()
 WHERE id = $1;
 
+-- name: GetTotalFromCreditTransactionsByUserAndMonth :one
+SELECT COALESCE(SUM(t.value), 0) AS total
+FROM transactions t
+INNER JOIN credit_cards cc ON t.credit_card_id = cc.id
+WHERE t.credit_card_id = $2
+    AND t.user_id = $3
+    AND t.date >= (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '1 month'
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '2 months'
+        END
+    )
+    AND t.date < (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            )
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '1 month'
+        END
+    );
+
 -- name: DeleteTransaction :exec
 DELETE FROM transactions
 WHERE id = $1;

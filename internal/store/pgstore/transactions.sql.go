@@ -89,6 +89,57 @@ func (q *Queries) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getTotalFromCreditTransactionsByUserAndMonth = `-- name: GetTotalFromCreditTransactionsByUserAndMonth :one
+SELECT COALESCE(SUM(t.value), 0) AS total
+FROM transactions t
+INNER JOIN credit_cards cc ON t.credit_card_id = cc.id
+WHERE t.credit_card_id = $2
+    AND t.user_id = $3
+    AND t.date >= (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '1 month'
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '2 months'
+        END
+    )
+    AND t.date < (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            )
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '1 month'
+        END
+    )
+`
+
+type GetTotalFromCreditTransactionsByUserAndMonthParams struct {
+	Column1      pgtype.Date `json:"column_1"`
+	CreditCardID pgtype.UUID `json:"credit_card_id"`
+	UserID       uuid.UUID   `json:"user_id"`
+}
+
+func (q *Queries) GetTotalFromCreditTransactionsByUserAndMonth(ctx context.Context, arg GetTotalFromCreditTransactionsByUserAndMonthParams) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getTotalFromCreditTransactionsByUserAndMonth, arg.Column1, arg.CreditCardID, arg.UserID)
+	var total interface{}
+	err := row.Scan(&total)
+	return total, err
+}
+
 const getTransactionByID = `-- name: GetTransactionByID :one
 SELECT 
     t.id,
