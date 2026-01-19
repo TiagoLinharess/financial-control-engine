@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"financialcontrol/internal/constants"
 	"financialcontrol/internal/v1/api"
 	"fmt"
 	"os"
@@ -18,11 +19,11 @@ func main() {
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s",
-		os.Getenv("FINANCIAL_CONTROL_DATABASE_USER"),
-		os.Getenv("FINANCIAL_CONTROL_DATABASE_PASSWORD"),
-		os.Getenv("FINANCIAL_CONTROL_DATABASE_HOST"),
-		os.Getenv("FINANCIAL_CONTROL_DATABASE_PORT"),
-		os.Getenv("FINANCIAL_CONTROL_DATABASE_NAME"),
+		os.Getenv(constants.EnvDBUser),
+		os.Getenv(constants.EnvDBPassword),
+		os.Getenv(constants.EnvDBHost),
+		os.Getenv(constants.EnvDBPort),
+		os.Getenv(constants.EnvDBName),
 	))
 
 	if err != nil {
@@ -39,9 +40,9 @@ func main() {
 
 	api.RegisterRoutes()
 
-	port := os.Getenv("FINANCIAL_CONTROL_APP_PORT")
+	port := os.Getenv(constants.EnvAppPort)
 	if port == "" {
-		port = "3080"
+		port = constants.DefaultAppPort
 	}
 
 	fmt.Printf("Starting Server on port :%s\n", port)

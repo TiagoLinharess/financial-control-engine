@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
 	"net/http"
 
@@ -12,6 +13,16 @@ func (c CreditCardsService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 
 	if len(err) > 0 {
 		return status, err
+	}
+
+	hasTransactions, err := c.repository.HasTransactionsByCreditCard(ctx, creditcard.ID)
+
+	if len(err) > 0 {
+		return http.StatusInternalServerError, err
+	}
+
+	if hasTransactions {
+		return http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.CreditcardCannotBeDeletedMsg}}
 	}
 
 	err = c.repository.Delete(ctx, creditcard.ID)

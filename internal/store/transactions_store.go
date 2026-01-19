@@ -5,13 +5,16 @@ import (
 	"financialcontrol/internal/store/pgstore"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type TransactionsStore interface {
-	CreateTransaction(ctx context.Context, arg pgstore.CreateTransactionParams) (pgstore.Transaction, error)
+	CreateTransaction(ctx context.Context, arg pgstore.CreateTransactionParams) (pgstore.CreateTransactionRow, error)
 	ListTransactionsByUserAndDate(ctx context.Context, arg pgstore.ListTransactionsByUserAndDateParams) ([]pgstore.ListTransactionsByUserAndDateRow, error)
 	ListTransactionsByUserIDPaginated(ctx context.Context, arg pgstore.ListTransactionsByUserIDPaginatedParams) ([]pgstore.ListTransactionsByUserIDPaginatedRow, error)
-	GetTransactionByID(ctx context.Context, id uuid.UUID) (pgstore.Transaction, error)
+	GetTransactionByID(ctx context.Context, id uuid.UUID) (pgstore.GetTransactionByIDRow, error)
 	UpdateTransaction(ctx context.Context, arg pgstore.UpdateTransactionParams) (pgstore.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uuid.UUID) error
+	PayTransaction(ctx context.Context, arg pgstore.PayTransactionParams) error
+	GetTotalFromCreditTransactionsByUserAndMonth(ctx context.Context, arg pgstore.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error)
 }

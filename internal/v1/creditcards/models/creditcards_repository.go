@@ -14,4 +14,5 @@ type CreditCardsRepository interface {
 	ReadByID(context context.Context, creditCardId uuid.UUID) (CreditCard, []errors.ApiError)
 	Update(context context.Context, creditCard CreditCard) (CreditCard, []errors.ApiError)
 	Delete(context context.Context, creditCardId uuid.UUID) []errors.ApiError
+	HasTransactionsByCreditCard(context context.Context, creditCardID uuid.UUID) (bool, []errors.ApiError)
 }

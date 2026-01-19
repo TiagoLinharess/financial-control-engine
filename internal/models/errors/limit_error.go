@@ -1,10 +1,14 @@
 package errors
 
+import (
+	"financialcontrol/internal/constants"
+)
+
 type LimitErrorReasons string
 
 const (
-	CategoriesLimit  LimitErrorReasons = "You reached the maximum number of categories allowed"
-	CreditcardsLimit LimitErrorReasons = "You reached the maximum number of credit cards allowed"
+	CategoriesLimit  LimitErrorReasons = constants.CategoryLimitReachedMsg
+	CreditcardsLimit LimitErrorReasons = constants.CreditcardLimitReachedMsg
 )
 
 type LimitError struct {
@@ -13,4 +17,8 @@ type LimitError struct {
 
 func (l LimitError) String() string {
 	return string(l.Message)
+}
+
+func (l LimitError) SystemMessage() (string, string) {
+	return constants.LimitErrorSystemMsg, string(l.Message)
 }

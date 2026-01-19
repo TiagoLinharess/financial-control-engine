@@ -1,7 +1,9 @@
 package store
 
+import "financialcontrol/internal/constants"
+
 type StoreErrorType string
 
 const (
-	ErrNoRows StoreErrorType = "no rows in result set"
+	ErrNoRows StoreErrorType = constants.StoreErrorNoRowsMsg
 )

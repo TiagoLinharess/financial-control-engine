@@ -14,4 +14,5 @@ type CategoriesRepository interface {
 	GetCountByUser(context context.Context, userID uuid.UUID) (int64, []errors.ApiError)
 	Update(context context.Context, category Category) (Category, []errors.ApiError)
 	Delete(context context.Context, categoryID uuid.UUID) []errors.ApiError
+	HasTransactionsByCategory(context context.Context, categoryID uuid.UUID) (bool, []errors.ApiError)
 }

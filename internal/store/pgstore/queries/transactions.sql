@@ -4,51 +4,155 @@ INSERT INTO transactions (
     name,
     date,
     value,
+    paid,
     category_id,
     credit_card_id,
     monthly_transactions_id,
     annual_transactions_id,
     installment_transactions_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING *;
+RETURNING id, name, date, value, paid, created_at, updated_at;
 
 -- name: GetTransactionByID :one
-SELECT *
-FROM transactions
-WHERE id = $1;
+SELECT 
+    t.id,
+    t.user_id, 
+    t.name, 
+    t.date, 
+    t.value,
+    t.paid,
+    t.created_at, 
+    t.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    mt.id as monthly_transactions_id, 
+    mt.day as monthly_transactions_day,
+
+    at.id as annual_transactions_id, 
+    at.month as annual_transactions_month, 
+    at.day as annual_transactions_day,
+
+    it.id as installment_transactions_id, 
+    it.initial_date as installment_transactions_initial_date,  
+    it.final_date as installment_transactions_final_date
+FROM transactions t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN credit_cards cc ON t.credit_card_id = cc.id
+LEFT JOIN monthly_transactions mt ON t.monthly_transactions_id = mt.id
+LEFT JOIN annual_transactions at ON t.annual_transactions_id = at.id
+LEFT JOIN installment_transactions it ON t.installment_transactions_id = it.id
+WHERE t.id = $1;
 
 -- name: ListTransactionsByUserIDPaginated :many
 SELECT 
-    id,
-    user_id,
-    name,
-    date,
-    value,
-    category_id,
-    credit_card_id,
-    monthly_transactions_id,
-    annual_transactions_id,
-    installment_transactions_id,
-    created_at,
-    updated_at,
+    t.id,
+    t.user_id, 
+    t.name, 
+    t.date, 
+    t.value,
+    t.paid, 
+    t.created_at, 
+    t.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    mt.id as monthly_transactions_id, 
+    mt.day as monthly_transactions_day,
+
+    at.id as annual_transactions_id, 
+    at.month as annual_transactions_month, 
+    at.day as annual_transactions_day,
+
+    it.id as installment_transactions_id, 
+    it.initial_date as installment_transactions_initial_date,  
+    it.final_date as installment_transactions_final_date,
+
     COUNT(*) OVER() as total_count
-FROM transactions
-WHERE user_id = $1
-ORDER BY date DESC
+FROM transactions t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN credit_cards cc ON t.credit_card_id = cc.id
+LEFT JOIN monthly_transactions mt ON t.monthly_transactions_id = mt.id
+LEFT JOIN annual_transactions at ON t.annual_transactions_id = at.id
+LEFT JOIN installment_transactions it ON t.installment_transactions_id = it.id
+WHERE t.user_id = $1
+ORDER BY t.date DESC
 LIMIT $2 OFFSET $3;
 
 -- name: ListTransactionsByUserAndDate :many
 SELECT 
-    *,
+    t.id,
+    t.user_id, 
+    t.name, 
+    t.date, 
+    t.value,
+    t.paid, 
+    t.created_at, 
+    t.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    mt.id as monthly_transactions_id, 
+    mt.day as monthly_transactions_day,
+
+    at.id as annual_transactions_id, 
+    at.month as annual_transactions_month, 
+    at.day as annual_transactions_day,
+
+    it.id as installment_transactions_id, 
+    it.initial_date as installment_transactions_initial_date,  
+    it.final_date as installment_transactions_final_date,
+
     COUNT(*) OVER() as total_count
-FROM transactions
-WHERE user_id = $1
-  AND date >= $2
-  AND date <= $3
-ORDER BY date DESC
-LIMIT $3 OFFSET $4;
+FROM transactions t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN credit_cards cc ON t.credit_card_id = cc.id
+LEFT JOIN monthly_transactions mt ON t.monthly_transactions_id = mt.id
+LEFT JOIN annual_transactions at ON t.annual_transactions_id = at.id
+LEFT JOIN installment_transactions it ON t.installment_transactions_id = it.id
+WHERE t.user_id = $1
+  AND t.date >= $2
+  AND t.date <= $3
+ORDER BY t.date DESC
+LIMIT $4 OFFSET $5;
 
 -- name: UpdateTransaction :one
 UPDATE transactions
@@ -56,15 +160,72 @@ SET
     name = $2,
     date = $3,
     value = $4,
-    category_id = $5,
-    credit_card_id = $6,
-    monthly_transactions_id = $7,
-    annual_transactions_id = $8,
-    installment_transactions_id = $9,
+    paid = $5,
+    category_id = $6,
+    credit_card_id = $7,
+    monthly_transactions_id = $8,
+    annual_transactions_id = $9,
+    installment_transactions_id = $10,
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 
+-- name: PayTransaction :exec
+UPDATE transactions
+SET
+    paid = $2,
+    updated_at = NOW()
+WHERE id = $1;
+
+-- name: GetTotalFromCreditTransactionsByUserAndMonth :one
+SELECT CAST(COALESCE(SUM(t.value), 0) AS NUMERIC) AS total
+FROM transactions t
+INNER JOIN credit_cards cc ON t.credit_card_id = cc.id
+WHERE t.credit_card_id = $2
+    AND t.user_id = $3
+    AND t.date::DATE >= (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            )
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) - INTERVAL '1 month'
+        END
+    )
+    AND t.date::DATE < (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) + INTERVAL '1 month'
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            )
+        END
+    );
+
 -- name: DeleteTransaction :exec
 DELETE FROM transactions
 WHERE id = $1;
+
+-- name: HasTransactionsByCategory :one
+SELECT EXISTS(
+    SELECT 1 FROM transactions
+    WHERE category_id = $1
+);
+
+-- name: HasTransactionsByCreditCard :one
+SELECT EXISTS(
+    SELECT 1 FROM transactions
+    WHERE credit_card_id = $1
+);

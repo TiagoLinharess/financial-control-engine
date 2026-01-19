@@ -20,4 +20,14 @@ func (a *Api) RegisterRoutes() {
 		creditcards.PUT("/:id", a.creditCardController.Update)
 		creditcards.DELETE("/:id", a.creditCardController.Delete)
 	}
+
+	trasactions := api.Group("/transactions")
+	{
+		trasactions.POST("/", a.transactionsController.Create)
+		trasactions.GET("/", a.transactionsController.Read)
+		trasactions.GET("/:id", a.transactionsController.ReadById)
+		trasactions.PUT("/:id", a.transactionsController.Update)
+		trasactions.DELETE("/:id", a.transactionsController.Delete)
+		trasactions.PUT("/pay/:id", a.transactionsController.Pay)
+	}
 }

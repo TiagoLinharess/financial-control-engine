@@ -14,4 +14,5 @@ type CategoriesStore interface {
 	CountCategoriesByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 	UpdateCategory(ctx context.Context, arg pgstore.UpdateCategoryParams) (pgstore.Category, error)
 	DeleteCategoryByID(ctx context.Context, id uuid.UUID) error
+	HasTransactionsByCategory(ctx context.Context, categoryID uuid.UUID) (bool, error)
 }

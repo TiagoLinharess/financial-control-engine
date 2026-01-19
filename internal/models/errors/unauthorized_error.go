@@ -1,10 +1,12 @@
 package errors
 
+import constants "financialcontrol/internal/constants"
+
 type UnauthorizedErrorReasons string
 
 const (
-	UserIDNotFound UnauthorizedErrorReasons = "UserID not found"
-	UserIDInvalid  UnauthorizedErrorReasons = "UserID invalid"
+	UserIDNotFound UnauthorizedErrorReasons = constants.UserIDNotFoundMsg
+	UserIDInvalid  UnauthorizedErrorReasons = constants.UserIDInvalidMsg
 )
 
 type UnauthorizedError struct {
@@ -13,4 +15,8 @@ type UnauthorizedError struct {
 
 func (u UnauthorizedError) String() string {
 	return string(u.Message)
+}
+
+func (u UnauthorizedError) SystemMessage() (string, string) {
+	return constants.UnauthorizedErrorSystemMsg, string(u.Message)
 }

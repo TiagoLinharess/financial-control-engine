@@ -5,6 +5,7 @@ import (
 	e "financialcontrol/internal/models/errors"
 	s "financialcontrol/internal/store"
 	pgs "financialcontrol/internal/store/pgstore"
+	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"
 
 	"github.com/google/uuid"
@@ -108,6 +109,16 @@ func (c CreditCardsRepository) Delete(context c.Context, creditCardId uuid.UUID)
 	}
 
 	return nil
+}
+
+func (c CreditCardsRepository) HasTransactionsByCreditCard(context c.Context, creditCardID uuid.UUID) (bool, []e.ApiError) {
+	hasTransactions, err := c.store.HasTransactionsByCreditCard(context, u.UUIDToPgTypeUUID(&creditCardID))
+
+	if err != nil {
+		return false, []e.ApiError{e.StoreError{Message: err.Error()}}
+	}
+
+	return hasTransactions, nil
 }
 
 func storeModelToModel(storeModel pgs.CreditCard) cm.CreditCard {

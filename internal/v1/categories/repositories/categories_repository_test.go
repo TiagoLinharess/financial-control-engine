@@ -398,3 +398,61 @@ func TestDeleteCategoryError(t *testing.T) {
 		t.Errorf("expected error message %v, got %v", mock.Error.Error(), err[0].String())
 	}
 }
+
+func TestHasTransactionsByCategory(t *testing.T) {
+	categoryID := uuid.New()
+
+	mock := stm.NewCategoriesStoreMock()
+	mock.HasTransactionsResult = true
+
+	repository := NewCategoriesRepository(mock)
+	hasTransactions, err := repository.HasTransactionsByCategory(t.Context(), categoryID)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if !hasTransactions {
+		t.Errorf("expected hasTransactions to be true, got false")
+	}
+}
+
+func TestHasTransactionsByCategoryNoTransactions(t *testing.T) {
+	categoryID := uuid.New()
+
+	mock := stm.NewCategoriesStoreMock()
+	mock.HasTransactionsResult = false
+
+	repository := NewCategoriesRepository(mock)
+	hasTransactions, err := repository.HasTransactionsByCategory(t.Context(), categoryID)
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if hasTransactions {
+		t.Errorf("expected hasTransactions to be false, got true")
+	}
+}
+
+func TestHasTransactionsByCategoryError(t *testing.T) {
+	categoryID := uuid.New()
+
+	mock := stm.NewCategoriesStoreMock()
+	mock.Error = errors.New("forcing a error...")
+
+	repository := NewCategoriesRepository(mock)
+	hasTransactions, err := repository.HasTransactionsByCategory(t.Context(), categoryID)
+
+	if err == nil {
+		t.Fatalf("expected an error, got nil")
+	}
+
+	if hasTransactions {
+		t.Errorf("expected hasTransactions to be false, got true")
+	}
+
+	if err[0].String() != mock.Error.Error() {
+		t.Errorf("expected error message %v, got %v", mock.Error.Error(), err[0].String())
+	}
+}

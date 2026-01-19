@@ -77,6 +77,7 @@ type Transaction struct {
 	Name                      string             `json:"name"`
 	Date                      pgtype.Timestamptz `json:"date"`
 	Value                     pgtype.Numeric     `json:"value"`
+	Paid                      bool               `json:"paid"`
 	CategoryID                uuid.UUID          `json:"category_id"`
 	CreditCardID              pgtype.UUID        `json:"credit_card_id"`
 	MonthlyTransactionsID     pgtype.UUID        `json:"monthly_transactions_id"`

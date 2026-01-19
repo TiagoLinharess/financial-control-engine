@@ -43,6 +43,11 @@ go mod tidy
 go run ./cmd/terndotenv
 ```
 
+#### 4.1 - run the command below to rollback migrations in linux
+```shell
+ export $(cat example.env | xargs) && tern migrate --migrations ./internal/store/pgstore/migrations --config ./internal/store/pgstore/migrations/tern.conf --destination=0
+```
+
 #### 5 - run the command below for dev mode using [air](https://github.com/air-verse/air)
 
 ```shell
