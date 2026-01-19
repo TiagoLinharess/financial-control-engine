@@ -25,6 +25,10 @@ func (c CreditCardRequest) Validate() []errors.ApiError {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardNameEmptyMsg})
 	}
 
+	if len(c.Name) >= 100 || len(c.Name) <= 2 {
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardNameInvalidCharsCountMsg})
+	}
+
 	if len(c.FirstFourNumbers) != 4 {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardFirstFourNumbersInvalidMsg})
 	}
@@ -45,8 +49,16 @@ func (c CreditCardRequest) Validate() []errors.ApiError {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardBackgroundColorEmptyMsg})
 	}
 
+	if len(c.BackgroundColor) != 7 && len(c.BackgroundColor) != 9 {
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardBackgroundColorInvalidCharsCountMsg})
+	}
+
 	if utils.IsBlank(c.TextColor) {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardTextColorEmptyMsg})
+	}
+
+	if len(c.TextColor) != 7 && len(c.TextColor) != 9 {
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardTextColorInvalidCharsCountMsg})
 	}
 
 	return errs

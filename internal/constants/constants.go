@@ -56,27 +56,32 @@ const (
 
 // CATEGORIES
 const (
-	CategoryNotFoundMsg             = "category.not.found"
-	CategoryTransactionTypeMsg      = "category.transaction_type.invalid"
-	CategoryTransactionTypeEmptyMsg = "category.transaction_type.empty"
-	CategoryNameEmptyMsg            = "category.name.empty"
-	CategoryIconEmptyMsg            = "category.icon.empty"
-	CategoryCannotBeDeletedMsg      = "category.cannot.be.deleted"
-	CategoryLimitReachedMsg         = "category.limit.reached"
+	CategoryNotFoundMsg              = "category.not.found"
+	CategoryTransactionTypeMsg       = "category.transaction_type.invalid"
+	CategoryTransactionTypeEmptyMsg  = "category.transaction_type.empty"
+	CategoryNameEmptyMsg             = "category.name.empty"
+	CategoryIconEmptyMsg             = "category.icon.empty"
+	CategoryNameInvalidCharsCountMsg = "category.name.invalid.chars.count"
+	CategoryIconInvalidCharsCountMsg = "category.icon.invalid.chars.count"
+	CategoryCannotBeDeletedMsg       = "category.cannot.be.deleted"
+	CategoryLimitReachedMsg          = "category.limit.reached"
 )
 
 // CREDIT CARDS
 const (
-	CreditcardNotFoundMsg                = "creditcard.not.found"
-	CreditcardNameEmptyMsg               = "creditcard.name.empty"
-	CreditcardFirstFourNumbersInvalidMsg = "creditcard.first.four.numbers.invalid"
-	CreditcardLimitInvalidMsg            = "creditcard.limit.invalid"
-	CreditcardClosingDayInvalidMsg       = "creditcard.closing.day.invalid"
-	CreditcardExpireDayInvalidMsg        = "creditcard.expire.day.invalid"
-	CreditcardCannotBeDeletedMsg         = "creditcard.cannot.be.deleted"
-	CreditcardBackgroundColorEmptyMsg    = "creditcard.background.color.empty"
-	CreditcardTextColorEmptyMsg          = "creditcard.text.color.empty"
-	CreditcardLimitReachedMsg            = "creditcard.limit.reached"
+	CreditcardNotFoundMsg                         = "creditcard.not.found"
+	CreditcardNameEmptyMsg                        = "creditcard.name.empty"
+	CreditcardNameInvalidCharsCountMsg            = "creditcard.name.invalid.chars.count"
+	CreditcardFirstFourNumbersInvalidMsg          = "creditcard.first.four.numbers.invalid"
+	CreditcardLimitInvalidMsg                     = "creditcard.limit.invalid"
+	CreditcardClosingDayInvalidMsg                = "creditcard.closing.day.invalid"
+	CreditcardExpireDayInvalidMsg                 = "creditcard.expire.day.invalid"
+	CreditcardCannotBeDeletedMsg                  = "creditcard.cannot.be.deleted"
+	CreditcardBackgroundColorEmptyMsg             = "creditcard.background.color.empty"
+	CreditcardBackgroundColorInvalidCharsCountMsg = "creditcard.background.color.invalid.chars.count"
+	CreditcardTextColorEmptyMsg                   = "creditcard.text.color.empty"
+	CreditcardTextColorInvalidCharsCountMsg       = "creditcard.text.color.invalid.chars.count"
+	CreditcardLimitReachedMsg                     = "creditcard.limit.reached"
 )
 
 // TRANSACTIONS
@@ -85,6 +90,7 @@ const (
 	TransactionNameInvalidCharsCountMsg       = "transaction.name.invalid.chars.count"
 	TransactionNotFoundMsg                    = "transaction.not.found"
 	TransactionAmountInvalidMsg               = "transaction.amount.invalid"
+	TransactionDateEmptyMsg                   = "transaction.date.empty.or.invalid"
 	TransactionDateInvalidMsg                 = "transaction.date.invalid"
 	TransactionCreditWithoutCreditcardMsg     = "transaction.credit.without.creditcard"
 	TransactionDebitOrIncomeWithCreditcardMsg = "transaction.debit.or.income.with.creditcard"

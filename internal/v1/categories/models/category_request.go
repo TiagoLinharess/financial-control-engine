@@ -27,6 +27,14 @@ func (c CategoryRequest) Validate() []errors.ApiError {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryNameEmptyMsg})
 	}
 
+	if len(c.Name) < 2 || len(c.Name) > 255 {
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryNameInvalidCharsCountMsg})
+	}
+
+	if len(c.Icon) < 2 || len(c.Icon) > 255 {
+		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryIconInvalidCharsCountMsg})
+	}
+
 	if utils.IsBlank(c.Icon) {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryIconEmptyMsg})
 	}

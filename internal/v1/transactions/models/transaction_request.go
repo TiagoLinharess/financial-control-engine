@@ -28,7 +28,7 @@ func (t TransactionRequest) Validate() []errors.ApiError {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionNameEmptyMsg})
 	}
 
-	if len(t.Name) > 255 || len(t.Name) < 2 {
+	if len(t.Name) >= 255 || len(t.Name) <= 2 {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionNameInvalidCharsCountMsg})
 	}
 
@@ -36,8 +36,9 @@ func (t TransactionRequest) Validate() []errors.ApiError {
 		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionAmountInvalidMsg})
 	}
 
-	// TODO: validate date
-	// TODO: validate field sizes
+	if t.Date.IsZero() {
+		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionDateEmptyMsg})
+	}
 
 	return errs
 }
