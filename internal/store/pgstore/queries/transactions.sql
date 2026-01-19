@@ -217,3 +217,15 @@ WHERE t.credit_card_id = $2
 -- name: DeleteTransaction :exec
 DELETE FROM transactions
 WHERE id = $1;
+
+-- name: HasTransactionsByCategory :one
+SELECT EXISTS(
+    SELECT 1 FROM transactions
+    WHERE category_id = $1
+);
+
+-- name: HasTransactionsByCreditCard :one
+SELECT EXISTS(
+    SELECT 1 FROM transactions
+    WHERE credit_card_id = $1
+);

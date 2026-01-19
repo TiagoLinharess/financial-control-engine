@@ -8,18 +8,20 @@ import (
 )
 
 type CategoriesStoreMock struct {
-	Error            error
-	CategoryResult   pgstore.Category
-	CategoriesResult []pgstore.Category
-	CategoriesCount  int64
+	Error                 error
+	CategoryResult        pgstore.Category
+	CategoriesResult      []pgstore.Category
+	CategoriesCount       int64
+	HasTransactionsResult bool
 }
 
 func NewCategoriesStoreMock() CategoriesStoreMock {
 	return CategoriesStoreMock{
-		Error:            nil,
-		CategoryResult:   pgstore.Category{},
-		CategoriesResult: []pgstore.Category{},
-		CategoriesCount:  0,
+		Error:                 nil,
+		CategoryResult:        pgstore.Category{},
+		CategoriesResult:      []pgstore.Category{},
+		CategoriesCount:       0,
+		HasTransactionsResult: false,
 	}
 }
 
@@ -45,4 +47,11 @@ func (c CategoriesStoreMock) GetCategoryByID(ctx context.Context, id uuid.UUID) 
 
 func (c CategoriesStoreMock) UpdateCategory(ctx context.Context, arg pgstore.UpdateCategoryParams) (pgstore.Category, error) {
 	return c.CategoryResult, c.Error
+}
+
+func (c CategoriesStoreMock) HasTransactionsByCategory(ctx context.Context, categoryID uuid.UUID) (bool, error) {
+	if c.Error != nil {
+		return false, c.Error
+	}
+	return c.HasTransactionsResult, nil
 }

@@ -496,6 +496,13 @@ func (c CategoriesRepositoryMock) Delete(ctx context.Context, id uuid.UUID) []e.
 	return nil
 }
 
+func (c CategoriesRepositoryMock) HasTransactionsByCategory(ctx context.Context, categoryID uuid.UUID) (bool, []e.ApiError) {
+	if c.Error != nil {
+		return false, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
+	}
+	return false, nil
+}
+
 type CreditcardsRepositoryMock struct {
 	Error             error
 	CreditcardResult  crm.CreditCard
@@ -550,6 +557,13 @@ func (c CreditcardsRepositoryMock) Delete(ctx context.Context, id uuid.UUID) []e
 		return []e.ApiError{e.CustomError{Message: c.Error.Error()}}
 	}
 	return nil
+}
+
+func (c CreditcardsRepositoryMock) HasTransactionsByCreditCard(ctx context.Context, creditCardID uuid.UUID) (bool, []e.ApiError) {
+	if c.Error != nil {
+		return false, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
+	}
+	return false, nil
 }
 
 type TransactionsRepositoryMock struct {

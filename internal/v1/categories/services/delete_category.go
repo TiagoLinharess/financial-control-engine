@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
 	"net/http"
 
@@ -14,7 +15,15 @@ func (s CategoriesService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 		return statusCode, errs
 	}
 
-	// TODO: check if category has transactions associated
+	hasTransactions, errs := s.repository.HasTransactionsByCategory(ctx, category.ID)
+
+	if len(errs) > 0 {
+		return http.StatusInternalServerError, errs
+	}
+
+	if hasTransactions {
+		return http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.CategoryCannotBeDeletedMsg}}
+	}
 
 	errs = s.repository.Delete(ctx, category.ID)
 

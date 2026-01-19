@@ -251,6 +251,34 @@ func (q *Queries) GetTransactionByID(ctx context.Context, id uuid.UUID) (GetTran
 	return i, err
 }
 
+const hasTransactionsByCategory = `-- name: HasTransactionsByCategory :one
+SELECT EXISTS(
+    SELECT 1 FROM transactions
+    WHERE category_id = $1
+)
+`
+
+func (q *Queries) HasTransactionsByCategory(ctx context.Context, categoryID uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, hasTransactionsByCategory, categoryID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const hasTransactionsByCreditCard = `-- name: HasTransactionsByCreditCard :one
+SELECT EXISTS(
+    SELECT 1 FROM transactions
+    WHERE credit_card_id = $1
+)
+`
+
+func (q *Queries) HasTransactionsByCreditCard(ctx context.Context, creditCardID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, hasTransactionsByCreditCard, creditCardID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listTransactionsByUserAndDate = `-- name: ListTransactionsByUserAndDate :many
 SELECT 
     t.id,

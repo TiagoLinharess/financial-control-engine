@@ -102,6 +102,16 @@ func (c CategoriesRepository) Delete(context context.Context, categoryID uuid.UU
 	return nil
 }
 
+func (c CategoriesRepository) HasTransactionsByCategory(context context.Context, categoryID uuid.UUID) (bool, []e.ApiError) {
+	hasTransactions, err := c.store.HasTransactionsByCategory(context, categoryID)
+
+	if err != nil {
+		return false, []e.ApiError{e.StoreError{Message: err.Error()}}
+	}
+
+	return hasTransactions, nil
+}
+
 func storeModelToModel(category pgs.Category) cm.Category {
 	return cm.Category{
 		ID:              category.ID,

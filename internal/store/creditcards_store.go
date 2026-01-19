@@ -5,6 +5,7 @@ import (
 	"financialcontrol/internal/store/pgstore"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CreditCardsStore interface {
@@ -14,4 +15,5 @@ type CreditCardsStore interface {
 	CountCreditCardsByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
 	UpdateCreditCard(ctx context.Context, arg pgstore.UpdateCreditCardParams) (pgstore.CreditCard, error)
 	DeleteCreditCard(ctx context.Context, id uuid.UUID) error
+	HasTransactionsByCreditCard(ctx context.Context, creditCardID pgtype.UUID) (bool, error)
 }
