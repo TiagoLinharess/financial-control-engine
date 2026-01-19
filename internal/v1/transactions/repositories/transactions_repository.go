@@ -188,7 +188,6 @@ func (t TransactionsRepository) Pay(context c.Context, id uuid.UUID, paid bool) 
 }
 
 func (t TransactionsRepository) GetCreditcardTotalAmount(ctx c.Context, model tm.TransactionsCreditCardTotal) (float64, error) {
-	// Normalize date to midnight to avoid timestamp issues
 	normalizedDate := time.Date(model.Date.Year(), model.Date.Month(), model.Date.Day(), 0, 0, 0, 0, model.Date.Location())
 	dateOnly := pgtype.Date{Time: normalizedDate, Valid: true}
 
