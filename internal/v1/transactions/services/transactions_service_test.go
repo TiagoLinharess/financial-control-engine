@@ -104,6 +104,105 @@ func TestGetRelationsCategoryInternalError(t *testing.T) {
 	}
 }
 
+func TestGetRelationsCreditcardTotalAmountError(t *testing.T) {
+	userID := uuid.New()
+	categoryID := uuid.New()
+	creditcardID := uuid.New()
+
+	request := tm.TransactionRequest{
+		Name:         "Test",
+		Date:         time.Now(),
+		Value:        100,
+		Paid:         false,
+		CategoryID:   categoryID,
+		CreditcardID: &creditcardID,
+	}
+
+	categoryMock := NewCategoriesRepositoryMock()
+	categoryMock.CategoryResult = cm.Category{
+		ID:              categoryID,
+		UserID:          userID,
+		TransactionType: m.Credit,
+	}
+
+	creditcardMock := NewCreditcardsRepositoryMock()
+	creditcardMock.CreditcardResult = crm.CreditCard{
+		ID:     creditcardID,
+		UserID: userID,
+		Limit:  10000,
+	}
+
+	transactionMock := NewTransactionsRepositoryMock()
+	transactionMock.Error = errors.New("get total amount failed")
+
+	svc := TransactionsService{
+		categoriesRepository:   categoryMock,
+		creditcardsRepository:  creditcardMock,
+		transactionsRepository: transactionMock,
+	}
+
+	ctx := setupTestContext(t, "POST", "/transactions", request)
+	setupContextWithCookie(ctx, userID)
+
+	_, status, errs := svc.getRelations(ctx)
+
+	if status != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, status)
+	}
+
+	if len(errs) == 0 {
+		t.Fatalf("expected errors, got none")
+	}
+}
+
+func TestGetRelationsDebitWithCreditcard(t *testing.T) {
+	userID := uuid.New()
+	categoryID := uuid.New()
+	creditcardID := uuid.New()
+
+	request := tm.TransactionRequest{
+		Name:         "Test",
+		Date:         time.Now(),
+		Value:        100,
+		Paid:         false,
+		CategoryID:   categoryID,
+		CreditcardID: &creditcardID,
+	}
+
+	categoryMock := NewCategoriesRepositoryMock()
+	categoryMock.CategoryResult = cm.Category{
+		ID:              categoryID,
+		UserID:          userID,
+		TransactionType: m.Debit,
+	}
+
+	creditcardMock := NewCreditcardsRepositoryMock()
+	creditcardMock.CreditcardResult = crm.CreditCard{
+		ID:     creditcardID,
+		UserID: userID,
+		Limit:  10000,
+	}
+
+	svc := TransactionsService{
+		categoriesRepository:   categoryMock,
+		creditcardsRepository:  creditcardMock,
+		transactionsRepository: NewTransactionsRepositoryMock(),
+	}
+
+	ctx := setupTestContext(t, "POST", "/transactions", request)
+	setupContextWithCookie(ctx, userID)
+
+	_, status, errs := svc.getRelations(ctx)
+
+	if status != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, status)
+	}
+
+	if len(errs) == 0 {
+		t.Fatalf("expected errors, got none")
+	}
+}
+
 func TestReadInvalidUUID(t *testing.T) {
 	svc := TransactionsService{}
 
@@ -253,7 +352,7 @@ func TestUpdateTransactionWithCreditcard(t *testing.T) {
 	categoryMock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Credit}
 
 	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{ID: creditcardID, UserID: userID}
+	creditcardMock.CreditcardResult = crm.CreditCard{ID: creditcardID, UserID: userID, Limit: 10000}
 
 	transactionMock := NewTransactionsRepositoryMock()
 	transactionMock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
@@ -340,7 +439,6 @@ func TestReadTransactionsRepositoryError(t *testing.T) {
 		t.Fatalf("expected errors, got none")
 	}
 }
-
 
 type CategoriesRepositoryMock struct {
 	Error            error
@@ -463,6 +561,7 @@ type TransactionsRepositoryMock struct {
 	TransactionFullResult tm.Transaction
 	TransactionsResult    []tm.Transaction
 	TransactionsCount     int64
+	Amount                float64
 }
 
 func NewTransactionsRepositoryMock() TransactionsRepositoryMock {
@@ -473,7 +572,16 @@ func NewTransactionsRepositoryMock() TransactionsRepositoryMock {
 		TransactionFullResult: tm.Transaction{},
 		TransactionsResult:    []tm.Transaction{},
 		TransactionsCount:     0,
+		Amount:                0,
 	}
+}
+
+func (t TransactionsRepositoryMock) GetCreditcardTotalAmount(ctx context.Context, model tm.TransactionsCreditCardTotal) (float64, error) {
+	if t.Error != nil {
+		return 0, t.Error
+	}
+
+	return t.Amount, nil
 }
 
 func (t TransactionsRepositoryMock) Create(ctx context.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError) {
@@ -784,6 +892,7 @@ func TestCreateTransactionWithValidCreditcard(t *testing.T) {
 		ID:     creditcardID,
 		UserID: userID,
 		Name:   "Test Card",
+		Limit:  10000,
 	}
 
 	transactionMock := NewTransactionsRepositoryMock()

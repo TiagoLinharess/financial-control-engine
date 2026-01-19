@@ -10,6 +10,8 @@ import (
 	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
+	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -183,6 +185,39 @@ func (t TransactionsRepository) Pay(context c.Context, id uuid.UUID, paid bool) 
 	}
 
 	return nil
+}
+
+func (t TransactionsRepository) GetCreditcardTotalAmount(ctx c.Context, model tm.TransactionsCreditCardTotal) (float64, error) {
+	// Normalize date to midnight to avoid timestamp issues
+	normalizedDate := time.Date(model.Date.Year(), model.Date.Month(), model.Date.Day(), 0, 0, 0, 0, model.Date.Location())
+	dateOnly := pgtype.Date{Time: normalizedDate, Valid: true}
+
+	params := pgs.GetTotalFromCreditTransactionsByUserAndMonthParams{
+		Column1:      dateOnly,
+		CreditCardID: u.UUIDToPgTypeUUID(&model.CreditcardID),
+		UserID:       model.UserID,
+	}
+
+	log.Printf("[DEBUG] GetCreditcardTotalAmount - Date: %v, CreditCardID: %v, UserID: %v\n",
+		dateOnly.Time, model.CreditcardID, model.UserID)
+
+	total, err := t.store.GetTotalFromCreditTransactionsByUserAndMonth(ctx, params)
+
+	log.Printf("[DEBUG] Raw total from DB: %v (type: %T), error: %v\n", total, total, err)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if !total.Valid {
+		log.Printf("[DEBUG] Total is NULL, returning 0\n")
+		return 0, nil
+	}
+
+	floatValue := u.NumericToFloat64(total)
+	log.Printf("[DEBUG] Converted to float64: %v\n", floatValue)
+
+	return floatValue, nil
 }
 
 func storeDateToStore(transaction pgs.ListTransactionsByUserAndDateRow) pgs.GetTransactionByIDRow {

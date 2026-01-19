@@ -10,6 +10,7 @@ import (
 	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -63,6 +64,24 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 			return tm.TransactionRelations{}, status, errs
 		}
 
+		totalAmountModel := tm.TransactionsCreditCardTotal{
+			Date:         request.Date,
+			UserID:       userID,
+			CreditcardID: creditcard.ID,
+		}
+
+		totalAmount, err := t.transactionsRepository.GetCreditcardTotalAmount(ctx, totalAmountModel)
+
+		if err != nil {
+			return tm.TransactionRelations{}, http.StatusInternalServerError, []e.ApiError{e.CustomError{Message: constants.InternalServerErrorMsg}}
+		}
+
+		fmt.Printf("Debug Tiago (1): %+v\n\n", totalAmount)
+		if totalAmount+request.Value > creditcard.Limit {
+			fmt.Printf("Debug Tiago (2): %+v\n\n", totalAmount+request.Value)
+			return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.TransactionCreditcardLimitExceededMsg}}
+		}
+
 		resp := creditcard.ToShortResponse()
 		creditcardResponse = &resp
 	}
@@ -76,7 +95,6 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 	}
 
 	// TODO: validar assim como no cartão de crédito, as despesas mensais, anuais e parceladas
-	// TODO: validar se o cartão de crédito tem limite suficiente para a transação
 
 	return tm.TransactionRelations{
 		UserID:             userID,

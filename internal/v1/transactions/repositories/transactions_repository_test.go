@@ -8,6 +8,7 @@ import (
 
 	m "financialcontrol/internal/models"
 	pgs "financialcontrol/internal/store/pgstore"
+	"financialcontrol/internal/utils"
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
@@ -655,6 +656,95 @@ func TestPay_Error(t *testing.T) {
 	assert.NotEmpty(t, errs)
 }
 
+func TestGetCreditcardTotalAmount_Success(t *testing.T) {
+	userID := createTestUUID()
+	creditcardID := createTestUUID()
+	now := time.Now()
+
+	mockStore := &mockStore{}
+	mockStore.onGetCreditcardTotalAmount = func(ctx context.Context, arg pgs.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error) {
+		return utils.Float64ToNumeric(250.50), nil
+	}
+
+	repo := NewTransactionsRepository(mockStore)
+
+	total, err := repo.GetCreditcardTotalAmount(context.Background(), tm.TransactionsCreditCardTotal{
+		Date:         now,
+		UserID:       userID,
+		CreditcardID: creditcardID,
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, 250.50, total)
+}
+
+func TestGetCreditcardTotalAmount_StoreError(t *testing.T) {
+	userID := createTestUUID()
+	creditcardID := createTestUUID()
+	now := time.Now()
+
+	mockStore := &mockStore{}
+	mockStore.onGetCreditcardTotalAmount = func(ctx context.Context, arg pgs.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error) {
+		return pgtype.Numeric{}, errors.New("database error")
+	}
+
+	repo := NewTransactionsRepository(mockStore)
+
+	total, err := repo.GetCreditcardTotalAmount(context.Background(), tm.TransactionsCreditCardTotal{
+		Date:         now,
+		UserID:       userID,
+		CreditcardID: creditcardID,
+	})
+
+	assert.NotNil(t, err)
+	assert.Equal(t, float64(0), total)
+}
+
+func TestGetCreditcardTotalAmount_ConversionError(t *testing.T) {
+	userID := createTestUUID()
+	creditcardID := createTestUUID()
+	now := time.Now()
+
+	mockStore := &mockStore{}
+	mockStore.onGetCreditcardTotalAmount = func(ctx context.Context, arg pgs.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error) {
+		// Return invalid Numeric to simulate conversion error
+		return pgtype.Numeric{Valid: false}, nil
+	}
+
+	repo := NewTransactionsRepository(mockStore)
+
+	total, err := repo.GetCreditcardTotalAmount(context.Background(), tm.TransactionsCreditCardTotal{
+		Date:         now,
+		UserID:       userID,
+		CreditcardID: creditcardID,
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, float64(0), total)
+}
+
+func TestGetCreditcardTotalAmount_Error(t *testing.T) {
+	userID := createTestUUID()
+	creditcardID := createTestUUID()
+	now := time.Now()
+
+	mockStore := &mockStore{}
+	mockStore.onGetCreditcardTotalAmount = func(ctx context.Context, arg pgs.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error) {
+		return pgtype.Numeric{}, errors.New("database error")
+	}
+
+	repo := NewTransactionsRepository(mockStore)
+
+	total, err := repo.GetCreditcardTotalAmount(context.Background(), tm.TransactionsCreditCardTotal{
+		Date:         now,
+		UserID:       userID,
+		CreditcardID: creditcardID,
+	})
+
+	assert.NotNil(t, err)
+	assert.Equal(t, float64(0), total)
+}
+
 type mockStore struct {
 	onCreateTransaction                 func(ctx context.Context, params pgs.CreateTransactionParams) (pgs.CreateTransactionRow, error)
 	onListTransactionsByUserIDPaginated func(ctx context.Context, params pgs.ListTransactionsByUserIDPaginatedParams) ([]pgs.ListTransactionsByUserIDPaginatedRow, error)
@@ -663,6 +753,14 @@ type mockStore struct {
 	onUpdateTransaction                 func(ctx context.Context, params pgs.UpdateTransactionParams) (pgs.Transaction, error)
 	onDeleteTransaction                 func(ctx context.Context, id uuid.UUID) error
 	onPayTransaction                    func(ctx context.Context, params pgs.PayTransactionParams) error
+	onGetCreditcardTotalAmount          func(ctx context.Context, arg pgs.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error)
+}
+
+func (m *mockStore) GetTotalFromCreditTransactionsByUserAndMonth(ctx context.Context, arg pgs.GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error) {
+	if m.onGetCreditcardTotalAmount != nil {
+		return m.onGetCreditcardTotalAmount(ctx, arg)
+	}
+	return pgtype.Numeric{}, nil
 }
 
 func (m *mockStore) CreateTransaction(ctx context.Context, params pgs.CreateTransactionParams) (pgs.CreateTransactionRow, error) {

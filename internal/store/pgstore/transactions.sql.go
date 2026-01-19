@@ -90,27 +90,12 @@ func (q *Queries) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
 }
 
 const getTotalFromCreditTransactionsByUserAndMonth = `-- name: GetTotalFromCreditTransactionsByUserAndMonth :one
-SELECT COALESCE(SUM(t.value), 0) AS total
+SELECT CAST(COALESCE(SUM(t.value), 0) AS NUMERIC) AS total
 FROM transactions t
 INNER JOIN credit_cards cc ON t.credit_card_id = cc.id
 WHERE t.credit_card_id = $2
     AND t.user_id = $3
-    AND t.date >= (
-        CASE 
-            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
-            THEN MAKE_DATE(
-                EXTRACT(YEAR FROM $1::DATE)::INT,
-                EXTRACT(MONTH FROM $1::DATE)::INT,
-                cc.close_day
-            ) - INTERVAL '1 month'
-            ELSE MAKE_DATE(
-                EXTRACT(YEAR FROM $1::DATE)::INT,
-                EXTRACT(MONTH FROM $1::DATE)::INT,
-                cc.close_day
-            ) - INTERVAL '2 months'
-        END
-    )
-    AND t.date < (
+    AND t.date::DATE >= (
         CASE 
             WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
             THEN MAKE_DATE(
@@ -125,6 +110,21 @@ WHERE t.credit_card_id = $2
             ) - INTERVAL '1 month'
         END
     )
+    AND t.date::DATE < (
+        CASE 
+            WHEN EXTRACT(DAY FROM $1::DATE) >= cc.close_day 
+            THEN MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            ) + INTERVAL '1 month'
+            ELSE MAKE_DATE(
+                EXTRACT(YEAR FROM $1::DATE)::INT,
+                EXTRACT(MONTH FROM $1::DATE)::INT,
+                cc.close_day
+            )
+        END
+    )
 `
 
 type GetTotalFromCreditTransactionsByUserAndMonthParams struct {
@@ -133,9 +133,9 @@ type GetTotalFromCreditTransactionsByUserAndMonthParams struct {
 	UserID       uuid.UUID   `json:"user_id"`
 }
 
-func (q *Queries) GetTotalFromCreditTransactionsByUserAndMonth(ctx context.Context, arg GetTotalFromCreditTransactionsByUserAndMonthParams) (interface{}, error) {
+func (q *Queries) GetTotalFromCreditTransactionsByUserAndMonth(ctx context.Context, arg GetTotalFromCreditTransactionsByUserAndMonthParams) (pgtype.Numeric, error) {
 	row := q.db.QueryRow(ctx, getTotalFromCreditTransactionsByUserAndMonth, arg.Column1, arg.CreditCardID, arg.UserID)
-	var total interface{}
+	var total pgtype.Numeric
 	err := row.Scan(&total)
 	return total, err
 }

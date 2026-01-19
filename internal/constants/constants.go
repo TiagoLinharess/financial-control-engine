@@ -32,6 +32,9 @@ const (
 // ERRORS
 const (
 	StoreErrorNoRowsMsg        = "no rows in result set"
+	InternalServerErrorMsg     = "internal.server.error"
+	NilValueErrorMsg           = "nil.value"
+	UnsupportedTypeErrorMsg    = "unsupported.type"
 	DecodeJsonErrorMsg         = "decode.json.error"
 	EncodeJsonErrorMsg         = "encode.json.error"
 	DecodeJsonErrorSystemMsg   = "DecodeJsonError"
@@ -85,4 +88,5 @@ const (
 	TransactionDateInvalidMsg                 = "transaction.date.invalid"
 	TransactionCreditWithoutCreditcardMsg     = "transaction.credit.without.creditcard"
 	TransactionDebitOrIncomeWithCreditcardMsg = "transaction.debit.or.income.with.creditcard"
+	TransactionCreditcardLimitExceededMsg     = "transaction.creditcard.limit.exceeded"
 )

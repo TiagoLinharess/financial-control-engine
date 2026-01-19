@@ -16,4 +16,5 @@ type TransactionsRepository interface {
 	Update(context context.Context, transaction Transaction) (ShortTransaction, []errors.ApiError)
 	Delete(context context.Context, id uuid.UUID) []errors.ApiError
 	Pay(context context.Context, id uuid.UUID, paid bool) []errors.ApiError
+	GetCreditcardTotalAmount(ctx context.Context, model TransactionsCreditCardTotal) (float64, error)
 }
