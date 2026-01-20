@@ -70,43 +70,117 @@ func (q *Queries) DeleteMonthlyTransaction(ctx context.Context, id uuid.UUID) er
 }
 
 const getMonthlyTransactionByID = `-- name: GetMonthlyTransactionByID :one
-SELECT id, user_id, name, value, day, category_id, credit_card_id, created_at, updated_at
-FROM monthly_transactions
-WHERE id = $1
+SELECT 
+    mt.id,
+    mt.user_id, 
+    mt.name, 
+    mt.value,
+    mt.day, 
+    mt.created_at, 
+    mt.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
+    COUNT(*) OVER() as total_count
+FROM monthly_transactions mt
+LEFT JOIN categories c ON mt.category_id = c.id
+LEFT JOIN credit_cards cc ON mt.credit_card_id = cc.id
+WHERE mt.id = $1
 `
 
-func (q *Queries) GetMonthlyTransactionByID(ctx context.Context, id uuid.UUID) (MonthlyTransaction, error) {
+type GetMonthlyTransactionByIDRow struct {
+	ID                         uuid.UUID          `json:"id"`
+	UserID                     uuid.UUID          `json:"user_id"`
+	Name                       string             `json:"name"`
+	Value                      pgtype.Numeric     `json:"value"`
+	Day                        int32              `json:"day"`
+	CreatedAt                  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                  pgtype.Timestamptz `json:"updated_at"`
+	CategoryID                 pgtype.UUID        `json:"category_id"`
+	CategoryTransactionType    pgtype.Int4        `json:"category_transaction_type"`
+	CategoryName               pgtype.Text        `json:"category_name"`
+	CategoryIcon               pgtype.Text        `json:"category_icon"`
+	CreditcardID               pgtype.UUID        `json:"creditcard_id"`
+	CreditcardName             pgtype.Text        `json:"creditcard_name"`
+	CreditcardFirstFourNumbers pgtype.Text        `json:"creditcard_first_four_numbers"`
+	CreditcardCreditLimit      pgtype.Float8      `json:"creditcard_credit_limit"`
+	CreditcardCloseDay         pgtype.Int4        `json:"creditcard_close_day"`
+	CreditcardExpireDay        pgtype.Int4        `json:"creditcard_expire_day"`
+	CreditcardBackgroundColor  pgtype.Text        `json:"creditcard_background_color"`
+	CreditcardTextColor        pgtype.Text        `json:"creditcard_text_color"`
+	TotalCount                 int64              `json:"total_count"`
+}
+
+func (q *Queries) GetMonthlyTransactionByID(ctx context.Context, id uuid.UUID) (GetMonthlyTransactionByIDRow, error) {
 	row := q.db.QueryRow(ctx, getMonthlyTransactionByID, id)
-	var i MonthlyTransaction
+	var i GetMonthlyTransactionByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.Name,
 		&i.Value,
 		&i.Day,
-		&i.CategoryID,
-		&i.CreditCardID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CategoryID,
+		&i.CategoryTransactionType,
+		&i.CategoryName,
+		&i.CategoryIcon,
+		&i.CreditcardID,
+		&i.CreditcardName,
+		&i.CreditcardFirstFourNumbers,
+		&i.CreditcardCreditLimit,
+		&i.CreditcardCloseDay,
+		&i.CreditcardExpireDay,
+		&i.CreditcardBackgroundColor,
+		&i.CreditcardTextColor,
+		&i.TotalCount,
 	)
 	return i, err
 }
 
 const listMonthlyTransactionsByUserIDPaginated = `-- name: ListMonthlyTransactionsByUserIDPaginated :many
 SELECT 
-    id,
-    user_id,
-    name,
-    value,
-    day,
-    category_id,
-    credit_card_id,
-    created_at,
-    updated_at,
+    mt.id,
+    mt.user_id, 
+    mt.name, 
+    mt.value,
+    mt.day, 
+    mt.created_at, 
+    mt.updated_at,
+
+    c.id as category_id, 
+    c.transaction_type as category_transaction_type, 
+    c.name as category_name, 
+    c.icon as category_icon,
+
+    cc.id as creditcard_id, 
+    cc.name as creditcard_name, 
+    cc.first_four_numbers as creditcard_first_four_numbers, 
+    cc.credit_limit as creditcard_credit_limit, 
+    cc.close_day as creditcard_close_day, 
+    cc.expire_day as creditcard_expire_day, 
+    cc.background_color as creditcard_background_color, 
+    cc.text_color as creditcard_text_color,
+
     COUNT(*) OVER() as total_count
-FROM monthly_transactions
-WHERE user_id = $1
-ORDER BY day ASC
+FROM monthly_transactions mt
+LEFT JOIN categories c ON mt.category_id = c.id
+LEFT JOIN credit_cards cc ON mt.credit_card_id = cc.id
+WHERE mt.user_id = $1
+ORDER BY mt.day ASC
 LIMIT $2 OFFSET $3
 `
 
@@ -117,16 +191,26 @@ type ListMonthlyTransactionsByUserIDPaginatedParams struct {
 }
 
 type ListMonthlyTransactionsByUserIDPaginatedRow struct {
-	ID           uuid.UUID          `json:"id"`
-	UserID       uuid.UUID          `json:"user_id"`
-	Name         string             `json:"name"`
-	Value        pgtype.Numeric     `json:"value"`
-	Day          int32              `json:"day"`
-	CategoryID   uuid.UUID          `json:"category_id"`
-	CreditCardID pgtype.UUID        `json:"credit_card_id"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-	TotalCount   int64              `json:"total_count"`
+	ID                         uuid.UUID          `json:"id"`
+	UserID                     uuid.UUID          `json:"user_id"`
+	Name                       string             `json:"name"`
+	Value                      pgtype.Numeric     `json:"value"`
+	Day                        int32              `json:"day"`
+	CreatedAt                  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                  pgtype.Timestamptz `json:"updated_at"`
+	CategoryID                 pgtype.UUID        `json:"category_id"`
+	CategoryTransactionType    pgtype.Int4        `json:"category_transaction_type"`
+	CategoryName               pgtype.Text        `json:"category_name"`
+	CategoryIcon               pgtype.Text        `json:"category_icon"`
+	CreditcardID               pgtype.UUID        `json:"creditcard_id"`
+	CreditcardName             pgtype.Text        `json:"creditcard_name"`
+	CreditcardFirstFourNumbers pgtype.Text        `json:"creditcard_first_four_numbers"`
+	CreditcardCreditLimit      pgtype.Float8      `json:"creditcard_credit_limit"`
+	CreditcardCloseDay         pgtype.Int4        `json:"creditcard_close_day"`
+	CreditcardExpireDay        pgtype.Int4        `json:"creditcard_expire_day"`
+	CreditcardBackgroundColor  pgtype.Text        `json:"creditcard_background_color"`
+	CreditcardTextColor        pgtype.Text        `json:"creditcard_text_color"`
+	TotalCount                 int64              `json:"total_count"`
 }
 
 func (q *Queries) ListMonthlyTransactionsByUserIDPaginated(ctx context.Context, arg ListMonthlyTransactionsByUserIDPaginatedParams) ([]ListMonthlyTransactionsByUserIDPaginatedRow, error) {
@@ -144,10 +228,20 @@ func (q *Queries) ListMonthlyTransactionsByUserIDPaginated(ctx context.Context, 
 			&i.Name,
 			&i.Value,
 			&i.Day,
-			&i.CategoryID,
-			&i.CreditCardID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CategoryID,
+			&i.CategoryTransactionType,
+			&i.CategoryName,
+			&i.CategoryIcon,
+			&i.CreditcardID,
+			&i.CreditcardName,
+			&i.CreditcardFirstFourNumbers,
+			&i.CreditcardCreditLimit,
+			&i.CreditcardCloseDay,
+			&i.CreditcardExpireDay,
+			&i.CreditcardBackgroundColor,
+			&i.CreditcardTextColor,
 			&i.TotalCount,
 		); err != nil {
 			return nil, err
