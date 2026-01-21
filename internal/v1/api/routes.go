@@ -30,4 +30,13 @@ func (a *Api) RegisterRoutes() {
 		trasactions.DELETE("/:id", a.transactionsController.Delete)
 		trasactions.PUT("/pay/:id", a.transactionsController.Pay)
 	}
+
+	monthlyTransactions := api.Group("/monthly_transactions")
+	{
+		monthlyTransactions.POST("/", a.monthlyTransactionsController.Create)
+		monthlyTransactions.GET("/", a.monthlyTransactionsController.Read)
+		monthlyTransactions.GET("/:id", a.monthlyTransactionsController.ReadById)
+		monthlyTransactions.PUT("/:id", a.monthlyTransactionsController.Update)
+		monthlyTransactions.DELETE("/:id", a.monthlyTransactionsController.Delete)
+	}
 }

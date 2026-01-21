@@ -9,6 +9,9 @@ import (
 	crc "financialcontrol/internal/v1/creditcards/controllers"
 	crr "financialcontrol/internal/v1/creditcards/repositories"
 	crs "financialcontrol/internal/v1/creditcards/services"
+	cmtc "financialcontrol/internal/v1/monthly_transations/controllers"
+	cmtr "financialcontrol/internal/v1/monthly_transations/repositories"
+	cmts "financialcontrol/internal/v1/monthly_transations/services"
 	ctc "financialcontrol/internal/v1/transactions/controllers"
 	ctr "financialcontrol/internal/v1/transactions/repositories"
 	cts "financialcontrol/internal/v1/transactions/services"
@@ -18,10 +21,11 @@ import (
 )
 
 type Api struct {
-	Router                 *gin.Engine
-	categoriesController   *cac.CategoriesController
-	creditCardController   *crc.CreditCardsController
-	transactionsController *ctc.TransactionsController
+	Router                        *gin.Engine
+	categoriesController          *cac.CategoriesController
+	creditCardController          *crc.CreditCardsController
+	transactionsController        *ctc.TransactionsController
+	monthlyTransactionsController *cmtc.MonthlyTransactionsController
 }
 
 func NewApi(
@@ -31,10 +35,11 @@ func NewApi(
 	store := pgstore.New(pool)
 
 	return Api{
-		Router:                 router,
-		categoriesController:   createCategory(store),
-		creditCardController:   createCreditCard(store),
-		transactionsController: createTransactions(store),
+		Router:                        router,
+		categoriesController:          createCategory(store),
+		creditCardController:          createCreditCard(store),
+		transactionsController:        createTransactions(store),
+		monthlyTransactionsController: createMonthlyTransactions(store),
 	}
 }
 
@@ -56,4 +61,10 @@ func createTransactions(store *pgstore.Queries) *ctc.TransactionsController {
 	transactionsRepository := ctr.NewTransactionsRepository(store)
 	service := cts.NewTransactionsService(categoriesRepository, creditcardRepository, transactionsRepository)
 	return ctc.NewTransactionsController(service)
+}
+
+func createMonthlyTransactions(store store.MonthlyTransactionsStore) *cmtc.MonthlyTransactionsController {
+	repository := cmtr.NewMonthlyTransactionsRepository(store)
+	service := cmts.NewMonthlyTransactionsService(repository)
+	return cmtc.NewMonthlyTransactionsController(service)
 }

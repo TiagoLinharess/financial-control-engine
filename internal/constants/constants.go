@@ -96,3 +96,11 @@ const (
 	TransactionDebitOrIncomeWithCreditcardMsg = "transaction.debit.or.income.with.creditcard"
 	TransactionCreditcardLimitExceededMsg     = "transaction.creditcard.limit.exceeded"
 )
+
+// MONTHLY TRANSACTIONS
+const (
+	MonthlyTransactionNameEmptyMsg             = "monthly.transaction.name.empty"
+	MonthlyTransactionNameInvalidCharsCountMsg = "monthly.transaction.name.invalid.chars.count"
+	MonthlyTransactionValueInvalidMsg          = "monthly.transaction.value.invalid"
+	MonthlyTransactionDayInvalidMsg            = "monthly.transaction.day.invalid"
+)
