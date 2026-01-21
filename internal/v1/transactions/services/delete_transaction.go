@@ -14,7 +14,7 @@ func (t TransactionsService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 		return status, errs
 	}
 
-	errs = t.transactionsRepository.Delete(ctx, transaction.ID)
+	errs = t.repository.DeleteTransaction(ctx, transaction.ID)
 
 	if len(errs) > 0 {
 		return http.StatusInternalServerError, errs

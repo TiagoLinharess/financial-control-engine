@@ -35,7 +35,7 @@ func (t TransactionsService) Update(ctx *gin.Context) (tm.TransactionResponse, i
 	transaction.Category = cm.ShortCategory(relations.CategoryResponse)
 	transaction.Creditcard = creditcard
 
-	transactionUpdated, errs := t.transactionsRepository.Update(ctx, transaction)
+	transactionUpdated, errs := t.repository.UpdateTransaction(ctx, transaction)
 
 	if len(errs) > 0 {
 		return tm.TransactionResponse{}, http.StatusInternalServerError, errs

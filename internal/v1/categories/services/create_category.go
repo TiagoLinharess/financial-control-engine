@@ -16,7 +16,7 @@ func (c CategoriesService) Create(ctx *gin.Context) (cm.CategoryResponse, int, [
 		return cm.CategoryResponse{}, http.StatusUnauthorized, errs
 	}
 
-	count, errs := c.repository.GetCountByUser(ctx, userID)
+	count, errs := c.repository.GetCategoryCountByUser(ctx, userID)
 
 	if len(errs) > 0 {
 		return cm.CategoryResponse{}, http.StatusInternalServerError, errs
@@ -34,7 +34,7 @@ func (c CategoriesService) Create(ctx *gin.Context) (cm.CategoryResponse, int, [
 
 	data := request.ToCreateModel(userID)
 
-	category, errs := c.repository.Create(ctx, data)
+	category, errs := c.repository.CreateCategory(ctx, data)
 
 	if len(errs) > 0 {
 		return cm.CategoryResponse{}, http.StatusInternalServerError, errs

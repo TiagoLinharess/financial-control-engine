@@ -17,7 +17,7 @@ func (c CreditCardsService) Read(ctx *gin.Context) (m.ResponseList[cm.CreditCard
 		return m.ResponseList[cm.CreditCardResponse]{}, http.StatusUnauthorized, errs
 	}
 
-	creditCards, errs := c.repository.Read(ctx, userID)
+	creditCards, errs := c.repository.ReadCreditCards(ctx, userID)
 
 	if len(errs) > 0 {
 		return m.ResponseList[cm.CreditCardResponse]{}, http.StatusInternalServerError, errs

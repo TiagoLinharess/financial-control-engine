@@ -3,7 +3,7 @@ package services
 import (
 	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
-	st "financialcontrol/internal/store"
+	st "financialcontrol/internal/store/models"
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/categories/models"
 	"net/http"
@@ -13,10 +13,10 @@ import (
 )
 
 type CategoriesService struct {
-	repository cm.CategoriesRepository
+	repository st.CategoriesRepository
 }
 
-func NewCategoriesService(repository cm.CategoriesRepository) cm.CategoriesService {
+func NewCategoriesService(repository st.CategoriesRepository) cm.CategoriesService {
 	return CategoriesService{repository: repository}
 }
 
@@ -36,7 +36,7 @@ func (s CategoriesService) read(ctx *gin.Context) (cm.Category, int, []e.ApiErro
 		return cm.Category{}, http.StatusBadRequest, errs
 	}
 
-	category, errs := s.repository.ReadByID(ctx, categoryID)
+	category, errs := s.repository.ReadCategoryByID(ctx, categoryID)
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {

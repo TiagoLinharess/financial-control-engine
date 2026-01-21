@@ -17,7 +17,7 @@ func (c CategoriesService) Read(ctx *gin.Context) (m.ResponseList[cm.CategoryRes
 		return m.ResponseList[cm.CategoryResponse]{}, http.StatusUnauthorized, errs
 	}
 
-	categories, errs := c.repository.Read(ctx, userID)
+	categories, errs := c.repository.ReadCategories(ctx, userID)
 
 	if len(errs) > 0 {
 		return m.ResponseList[cm.CategoryResponse]{}, http.StatusInternalServerError, errs

@@ -17,7 +17,7 @@ func (t TransactionsService) Create(ctx *gin.Context) (tm.TransactionResponse, i
 
 	data := relations.Request.ToCreateModel(relations.UserID)
 
-	transaction, errs := t.transactionsRepository.Create(ctx, data)
+	transaction, errs := t.repository.CreateTransaction(ctx, data)
 
 	if len(errs) > 0 {
 		return tm.TransactionResponse{}, http.StatusInternalServerError, errs

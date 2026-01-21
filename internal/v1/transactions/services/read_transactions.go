@@ -60,7 +60,7 @@ func (t TransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[tm.Tran
 			EndDate:   endDate,
 		}
 
-		responses, count, errs = t.transactionsRepository.ReadInToDates(ctx, paginatedParams)
+		responses, count, errs = t.repository.ReadTransactionsInToDates(ctx, paginatedParams)
 	} else {
 		paginatedParams := m.PaginatedParams{
 			UserID: userID,
@@ -68,7 +68,7 @@ func (t TransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[tm.Tran
 			Offset: int32(offset),
 		}
 
-		responses, count, errs = t.transactionsRepository.Read(ctx, paginatedParams)
+		responses, count, errs = t.repository.ReadTransactions(ctx, paginatedParams)
 	}
 
 	if len(errs) > 0 {

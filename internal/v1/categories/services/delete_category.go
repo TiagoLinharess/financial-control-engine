@@ -25,7 +25,7 @@ func (s CategoriesService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 		return http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.CategoryCannotBeDeletedMsg}}
 	}
 
-	errs = s.repository.Delete(ctx, category.ID)
+	errs = s.repository.DeleteCategory(ctx, category.ID)
 
 	if len(errs) > 0 {
 		return http.StatusInternalServerError, errs

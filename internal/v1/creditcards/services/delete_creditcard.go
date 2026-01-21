@@ -25,7 +25,7 @@ func (c CreditCardsService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 		return http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.CreditcardCannotBeDeletedMsg}}
 	}
 
-	err = c.repository.Delete(ctx, creditcard.ID)
+	err = c.repository.DeleteCreditCard(ctx, creditcard.ID)
 
 	if len(err) > 0 {
 		return http.StatusInternalServerError, err

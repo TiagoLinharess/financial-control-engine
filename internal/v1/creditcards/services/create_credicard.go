@@ -34,7 +34,7 @@ func (c CreditCardsService) Create(ctx *gin.Context) (cm.CreditCardResponse, int
 
 	model := request.ToCreateModel(userID)
 
-	creditCard, errs := c.repository.Create(ctx, model)
+	creditCard, errs := c.repository.CreateCreditCard(ctx, model)
 
 	if len(errs) > 0 {
 		return cm.CreditCardResponse{}, http.StatusInternalServerError, errs

@@ -3,7 +3,7 @@ package services
 import (
 	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
-	s "financialcontrol/internal/store"
+	sm "financialcontrol/internal/store/models"
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"
 	"net/http"
@@ -13,10 +13,10 @@ import (
 )
 
 type CreditCardsService struct {
-	repository cm.CreditCardsRepository
+	repository sm.CreditCardsRepository
 }
 
-func NewCreditCardsService(repository cm.CreditCardsRepository) cm.CreditCardsService {
+func NewCreditCardsService(repository sm.CreditCardsRepository) cm.CreditCardsService {
 	return &CreditCardsService{repository: repository}
 }
 
@@ -36,11 +36,11 @@ func (c CreditCardsService) read(ctx *gin.Context) (cm.CreditCard, int, []e.ApiE
 		return cm.CreditCard{}, http.StatusBadRequest, errs
 	}
 
-	creditcard, errs := c.repository.ReadByID(ctx, creditcardId)
+	creditcard, errs := c.repository.ReadCreditCardByID(ctx, creditcardId)
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {
-			return err.String() == string(s.ErrNoRows)
+			return err.String() == string(sm.ErrNoRows)
 		})
 		if isNotFoundErr {
 			return cm.CreditCard{}, http.StatusNotFound, creditcardNotFoundErr

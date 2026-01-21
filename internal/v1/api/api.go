@@ -2,18 +2,17 @@ package api
 
 import (
 	"financialcontrol/internal/store"
+	sm "financialcontrol/internal/store/models"
 	"financialcontrol/internal/store/pgstore"
+	r "financialcontrol/internal/store/repositories"
 	cac "financialcontrol/internal/v1/categories/controllers"
-	car "financialcontrol/internal/v1/categories/repositories"
 	cas "financialcontrol/internal/v1/categories/services"
 	crc "financialcontrol/internal/v1/creditcards/controllers"
-	crr "financialcontrol/internal/v1/creditcards/repositories"
 	crs "financialcontrol/internal/v1/creditcards/services"
 	cmtc "financialcontrol/internal/v1/monthly_transations/controllers"
 	cmtr "financialcontrol/internal/v1/monthly_transations/repositories"
 	cmts "financialcontrol/internal/v1/monthly_transations/services"
 	ctc "financialcontrol/internal/v1/transactions/controllers"
-	ctr "financialcontrol/internal/v1/transactions/repositories"
 	cts "financialcontrol/internal/v1/transactions/services"
 
 	"github.com/gin-gonic/gin"
@@ -33,33 +32,29 @@ func NewApi(
 	pool *pgxpool.Pool,
 ) Api {
 	store := pgstore.New(pool)
+	repository := r.NewRepository(store)
 
 	return Api{
 		Router:                        router,
-		categoriesController:          createCategory(store),
-		creditCardController:          createCreditCard(store),
-		transactionsController:        createTransactions(store),
+		categoriesController:          createCategory(repository),
+		creditCardController:          createCreditCard(repository),
+		transactionsController:        createTransactions(repository),
 		monthlyTransactionsController: createMonthlyTransactions(store),
 	}
 }
 
-func createCategory(store store.CategoriesStore) *cac.CategoriesController {
-	repository := car.NewCategoriesRepository(store)
+func createCategory(repository sm.CategoriesRepository) *cac.CategoriesController {
 	service := cas.NewCategoriesService(repository)
 	return cac.NewCategoriesController(service)
 }
 
-func createCreditCard(store store.CreditCardsStore) *crc.CreditCardsController {
-	repository := crr.NewCreditCardsRepository(store)
+func createCreditCard(repository sm.CreditCardsRepository) *crc.CreditCardsController {
 	service := crs.NewCreditCardsService(repository)
 	return crc.NewCreditCardsController(service)
 }
 
-func createTransactions(store *pgstore.Queries) *ctc.TransactionsController {
-	categoriesRepository := car.NewCategoriesRepository(store)
-	creditcardRepository := crr.NewCreditCardsRepository(store)
-	transactionsRepository := ctr.NewTransactionsRepository(store)
-	service := cts.NewTransactionsService(categoriesRepository, creditcardRepository, transactionsRepository)
+func createTransactions(repository sm.TransactionsRepository) *ctc.TransactionsController {
+	service := cts.NewTransactionsService(repository)
 	return ctc.NewTransactionsController(service)
 }
 

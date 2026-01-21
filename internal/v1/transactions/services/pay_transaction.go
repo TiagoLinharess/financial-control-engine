@@ -14,7 +14,7 @@ func (t TransactionsService) Pay(ctx *gin.Context) (int, []e.ApiError) {
 		return status, errs
 	}
 
-	errs = t.transactionsRepository.Pay(ctx, transaction.ID, !transaction.Paid)
+	errs = t.repository.PayTransaction(ctx, transaction.ID, !transaction.Paid)
 
 	if len(errs) > 0 {
 		return http.StatusInternalServerError, errs

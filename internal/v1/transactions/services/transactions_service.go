@@ -4,9 +4,8 @@ import (
 	"financialcontrol/internal/constants"
 	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
-	st "financialcontrol/internal/store"
+	st "financialcontrol/internal/store/models"
 	u "financialcontrol/internal/utils"
-	ca "financialcontrol/internal/v1/categories/models"
 	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
@@ -17,20 +16,14 @@ import (
 )
 
 type TransactionsService struct {
-	categoriesRepository   ca.CategoriesRepository
-	creditcardsRepository  cr.CreditCardsRepository
-	transactionsRepository tm.TransactionsRepository
+	repository st.TransactionsRepository
 }
 
 func NewTransactionsService(
-	categoriesRepository ca.CategoriesRepository,
-	creditcardsRepository cr.CreditCardsRepository,
-	transactionsRepository tm.TransactionsRepository,
+	repository st.TransactionsRepository,
 ) tm.TransactionsService {
 	return TransactionsService{
-		categoriesRepository:   categoriesRepository,
-		creditcardsRepository:  creditcardsRepository,
-		transactionsRepository: transactionsRepository,
+		repository: repository,
 	}
 }
 
@@ -69,7 +62,7 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 			CreditcardID: creditcard.ID,
 		}
 
-		totalAmount, err := t.transactionsRepository.GetCreditcardTotalAmount(ctx, totalAmountModel)
+		totalAmount, err := t.repository.GetCreditcardTotalAmount(ctx, totalAmountModel)
 
 		if err != nil {
 			return tm.TransactionRelations{}, http.StatusInternalServerError, []e.ApiError{e.CustomError{Message: constants.InternalServerErrorMsg}}
@@ -104,7 +97,7 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 func (t TransactionsService) readCategory(ctx *gin.Context, userID uuid.UUID, id uuid.UUID) (cm.Category, int, []e.ApiError) {
 	categoryNotFoundErr := []e.ApiError{e.NotFoundError{Message: e.CategoryNotFound}}
 
-	category, errs := t.categoriesRepository.ReadByID(ctx, id)
+	category, errs := t.repository.ReadCategoryByID(ctx, id)
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {
@@ -126,7 +119,7 @@ func (t TransactionsService) readCategory(ctx *gin.Context, userID uuid.UUID, id
 func (t TransactionsService) readCreditcard(ctx *gin.Context, userID uuid.UUID, id uuid.UUID) (*cr.CreditCard, int, []e.ApiError) {
 	creditcardNotFoundErr := []e.ApiError{e.NotFoundError{Message: e.CreditcardNotFound}}
 
-	creditcard, errs := t.creditcardsRepository.ReadByID(ctx, id)
+	creditcard, errs := t.repository.ReadCreditCardByID(ctx, id)
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {
@@ -161,7 +154,7 @@ func (t TransactionsService) read(ctx *gin.Context) (tm.Transaction, int, []e.Ap
 		return tm.Transaction{}, http.StatusBadRequest, errs
 	}
 
-	transaction, errs := t.transactionsRepository.ReadById(ctx, transactionId)
+	transaction, errs := t.repository.ReadTransactionById(ctx, transactionId)
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {

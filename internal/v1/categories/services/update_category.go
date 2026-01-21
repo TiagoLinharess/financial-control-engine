@@ -26,7 +26,7 @@ func (s CategoriesService) Update(ctx *gin.Context) (cm.CategoryResponse, int, [
 	category.Name = request.Name
 	category.TransactionType = *request.TransactionType
 
-	categoryEdited, errs := s.repository.Update(ctx, category)
+	categoryEdited, errs := s.repository.UpdateCategory(ctx, category)
 
 	if len(errs) > 0 {
 		return cm.CategoryResponse{}, http.StatusInternalServerError, errs

@@ -30,7 +30,7 @@ func (c CreditCardsService) Update(ctx *gin.Context) (cm.CreditCardResponse, int
 	creditcard.BackgroundColor = request.BackgroundColor
 	creditcard.TextColor = request.TextColor
 
-	creditcard, err = c.repository.Update(ctx, creditcard)
+	creditcard, err = c.repository.UpdateCreditCard(ctx, creditcard)
 
 	return creditcard.ToResponse(), http.StatusOK, nil
 }
