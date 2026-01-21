@@ -10,6 +10,6 @@ import (
 type TransactionRelations struct {
 	UserID             uuid.UUID
 	Request            TransactionRequest
-	CategoryResponse   cm.ShortCategoryReponse
+	CategoryResponse   cm.ShortCategoryResponse
 	CreditcardResponse *cr.ShortCreditCardResponse
 }

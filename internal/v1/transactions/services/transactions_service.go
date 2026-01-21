@@ -10,7 +10,6 @@ import (
 	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -76,9 +75,7 @@ func (t TransactionsService) getRelations(ctx *gin.Context) (tm.TransactionRelat
 			return tm.TransactionRelations{}, http.StatusInternalServerError, []e.ApiError{e.CustomError{Message: constants.InternalServerErrorMsg}}
 		}
 
-		fmt.Printf("Debug Tiago (1): %+v\n\n", totalAmount)
 		if totalAmount+request.Value > creditcard.Limit {
-			fmt.Printf("Debug Tiago (2): %+v\n\n", totalAmount+request.Value)
 			return tm.TransactionRelations{}, http.StatusBadRequest, []e.ApiError{e.CustomError{Message: constants.TransactionCreditcardLimitExceededMsg}}
 		}
 

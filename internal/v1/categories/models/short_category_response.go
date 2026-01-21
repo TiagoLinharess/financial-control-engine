@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ShortCategoryReponse struct {
+type ShortCategoryResponse struct {
 	ID              uuid.UUID              `json:"id"`
 	TransactionType models.TransactionType `json:"transaction_type"`
 	Name            string                 `json:"name"`

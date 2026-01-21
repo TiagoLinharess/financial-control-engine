@@ -18,7 +18,7 @@ type ShortTransaction struct {
 	UpdatedAt time.Time
 }
 
-func (t ShortTransaction) ToResponse(category cm.ShortCategoryReponse, creditcard *cr.ShortCreditCardResponse) TransactionResponse {
+func (t ShortTransaction) ToResponse(category cm.ShortCategoryResponse, creditcard *cr.ShortCreditCardResponse) TransactionResponse {
 	return TransactionResponse{
 		ID:                     t.ID,
 		Name:                   t.Name,

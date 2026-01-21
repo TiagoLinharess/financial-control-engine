@@ -28,8 +28,8 @@ func (c Category) ToResponse() CategoryResponse {
 	}
 }
 
-func (c Category) ToShortResponse() ShortCategoryReponse {
-	return ShortCategoryReponse{
+func (c Category) ToShortResponse() ShortCategoryResponse {
+	return ShortCategoryResponse{
 		ID:              c.ID,
 		TransactionType: c.TransactionType,
 		Name:            c.Name,

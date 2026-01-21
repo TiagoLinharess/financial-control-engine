@@ -1,8 +1,8 @@
 package services
 
 import (
-	"financialcontrol/internal/models"
-	"financialcontrol/internal/models/errors"
+	m "financialcontrol/internal/models"
+	e "financialcontrol/internal/models/errors"
 	mtm "financialcontrol/internal/v1/monthly_transations/models"
 
 	"github.com/gin-gonic/gin"
@@ -18,27 +18,22 @@ func NewMonthlyTransactionsService(repository mtm.MonthlyTransactionsRepository)
 	}
 }
 
-// Create implements [models.MonthlyTransactionsService].
-func (m *MonthlyTransactionsService) Create(ctx *gin.Context) (mtm.MonthlyTransactionResponse, int, []errors.ApiError) {
-	panic("unimplemented")
-}
-
 // Delete implements [models.MonthlyTransactionsService].
-func (m *MonthlyTransactionsService) Delete(ctx *gin.Context) (int, []errors.ApiError) {
+func (m *MonthlyTransactionsService) Delete(ctx *gin.Context) (int, []e.ApiError) {
 	panic("unimplemented")
 }
 
 // Read implements [models.MonthlyTransactionsService].
-func (m *MonthlyTransactionsService) Read(ctx *gin.Context) (models.PaginatedResponse[mtm.MonthlyTransactionResponse], int, []errors.ApiError) {
+func (m *MonthlyTransactionsService) Read(ctx *gin.Context) (m.PaginatedResponse[mtm.MonthlyTransactionResponse], int, []e.ApiError) {
 	panic("unimplemented")
 }
 
 // ReadById implements [models.MonthlyTransactionsService].
-func (m *MonthlyTransactionsService) ReadById(ctx *gin.Context) (mtm.MonthlyTransactionResponse, int, []errors.ApiError) {
+func (m *MonthlyTransactionsService) ReadById(ctx *gin.Context) (mtm.MonthlyTransactionResponse, int, []e.ApiError) {
 	panic("unimplemented")
 }
 
 // Update implements [models.MonthlyTransactionsService].
-func (m *MonthlyTransactionsService) Update(ctx *gin.Context) (mtm.MonthlyTransactionResponse, int, []errors.ApiError) {
+func (m *MonthlyTransactionsService) Update(ctx *gin.Context) (mtm.MonthlyTransactionResponse, int, []e.ApiError) {
 	panic("unimplemented")
 }

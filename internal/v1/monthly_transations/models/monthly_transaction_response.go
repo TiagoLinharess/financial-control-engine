@@ -7,11 +7,11 @@ import (
 )
 
 type MonthlyTransactionResponse struct {
-	ID         string              `json:"id"`
-	Value      float64             `json:"value"`
-	Day        int64               `json:"day"`
-	Category   cm.ShortCategory    `json:"category"`
-	Creditcard *cr.ShortCreditCard `json:"creditcard"`
-	CreatedAt  time.Time           `json:"created_at"`
-	UpdatedAt  time.Time           `json:"updated_at"`
+	ID         string                      `json:"id"`
+	Value      float64                     `json:"value"`
+	Day        int64                       `json:"day"`
+	Category   cm.ShortCategoryResponse    `json:"category"`
+	Creditcard *cr.ShortCreditCardResponse `json:"creditcard"`
+	CreatedAt  time.Time                   `json:"created_at"`
+	UpdatedAt  time.Time                   `json:"updated_at"`
 }

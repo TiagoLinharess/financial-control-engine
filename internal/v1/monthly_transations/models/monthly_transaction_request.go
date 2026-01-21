@@ -4,6 +4,8 @@ import (
 	"financialcontrol/internal/constants"
 	e "financialcontrol/internal/models/errors"
 	u "financialcontrol/internal/utils"
+
+	"github.com/google/uuid"
 )
 
 type MonthlyTransactionRequest struct {
@@ -14,7 +16,7 @@ type MonthlyTransactionRequest struct {
 	CreditCardID string  `json:"credit_card_id"`
 }
 
-func (m *MonthlyTransactionRequest) Validate() []e.ApiError {
+func (m MonthlyTransactionRequest) Validate() []e.ApiError {
 	errs := make([]e.ApiError, 0)
 
 	if u.IsBlank(m.Name) {
@@ -34,4 +36,15 @@ func (m *MonthlyTransactionRequest) Validate() []e.ApiError {
 	}
 
 	return errs
+}
+
+func (m *MonthlyTransactionRequest) ToCreateModel(userID uuid.UUID) CreateMonthlyTransaction {
+	return CreateMonthlyTransaction{
+		UserID:       userID,
+		Name:         m.Name,
+		Value:        m.Value,
+		Day:          m.Day,
+		CategoryID:   m.CategoryID,
+		CreditCardID: m.CreditCardID,
+	}
 }

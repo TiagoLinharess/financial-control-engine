@@ -13,8 +13,8 @@ type ShortCategory struct {
 	Icon            string
 }
 
-func (c ShortCategory) ToShortResponse() ShortCategoryReponse {
-	return ShortCategoryReponse{
+func (c ShortCategory) ToShortResponse() ShortCategoryResponse {
+	return ShortCategoryResponse{
 		ID:              c.ID,
 		TransactionType: c.TransactionType,
 		Name:            c.Name,
