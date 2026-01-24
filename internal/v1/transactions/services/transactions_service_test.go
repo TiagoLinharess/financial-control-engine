@@ -12,7 +12,7 @@ import (
 
 	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
-	st "financialcontrol/internal/store"
+	st "financialcontrol/internal/store/models"
 	cm "financialcontrol/internal/v1/categories/models"
 	crm "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
@@ -46,9 +46,7 @@ func setupTestContext(t *testing.T, method, path string, body interface{}) *gin.
 
 func TestGetRelationsInvalidJSON(t *testing.T) {
 	svc := TransactionsService{
-		categoriesRepository:   NewCategoriesRepositoryMock(),
-		creditcardsRepository:  NewCreditcardsRepositoryMock(),
-		transactionsRepository: NewTransactionsRepositoryMock(),
+		repository: NewTransactionsRepositoryMock(),
 	}
 
 	req, _ := http.NewRequest("POST", "/transactions", bytes.NewBufferString("{invalid-json"))
@@ -81,13 +79,11 @@ func TestGetRelationsCategoryInternalError(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.Error = errors.New("db error")
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryError = errors.New("db error")
 
 	svc := TransactionsService{
-		categoriesRepository:   categoryMock,
-		creditcardsRepository:  NewCreditcardsRepositoryMock(),
-		transactionsRepository: NewTransactionsRepositoryMock(),
+		repository: mock,
 	}
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
@@ -118,27 +114,21 @@ func TestGetRelationsCreditcardTotalAmountError(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = crm.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Limit:  10000,
 	}
-
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New("get total amount failed")
+	mock.Error = errors.New("get total amount failed")
 
 	svc := TransactionsService{
-		categoriesRepository:   categoryMock,
-		creditcardsRepository:  creditcardMock,
-		transactionsRepository: transactionMock,
+		repository: mock,
 	}
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
@@ -169,24 +159,20 @@ func TestGetRelationsDebitWithCreditcard(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = crm.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Limit:  10000,
 	}
 
 	svc := TransactionsService{
-		categoriesRepository:   categoryMock,
-		creditcardsRepository:  creditcardMock,
-		transactionsRepository: NewTransactionsRepositoryMock(),
+		repository: mock,
 	}
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
@@ -225,11 +211,11 @@ func TestReadRepositoryInternalError(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New("db error")
+	mock := NewTransactionsRepositoryMock()
+	mock.Error = errors.New("db error")
 
 	svc := TransactionsService{
-		transactionsRepository: transactionMock,
+		repository: mock,
 	}
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
@@ -282,11 +268,11 @@ func TestReadTransactionsLimitTooLarge(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}}
 
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionsResult = transactions
-	transactionMock.TransactionsCount = 1
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionsResult = transactions
+	mock.TransactionsCount = 1
 
-	svc := NewTransactionsService(NewCategoriesRepositoryMock(), NewCreditcardsRepositoryMock(), transactionMock)
+	svc := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=100&page=1")
 	setupContextWithCookie(ctx, userID)
@@ -309,11 +295,11 @@ func TestReadTransactionsLimitTooLarge(t *testing.T) {
 func TestReadTransactionsPageZero(t *testing.T) {
 	userID := uuid.New()
 
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionsResult = []tm.Transaction{}
-	transactionMock.TransactionsCount = 0
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionsResult = []tm.Transaction{}
+	mock.TransactionsCount = 0
 
-	svc := NewTransactionsService(NewCategoriesRepositoryMock(), NewCreditcardsRepositoryMock(), transactionMock)
+	svc := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=0")
 	setupContextWithCookie(ctx, userID)
@@ -348,17 +334,13 @@ func TestUpdateTransactionWithCreditcard(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Credit}
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Credit}
+	mock.CreditcardResult = crm.CreditCard{ID: creditcardID, UserID: userID, Limit: 10000}
+	mock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
+	mock.TransactionResult = tm.ShortTransaction{ID: transactionID}
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{ID: creditcardID, UserID: userID, Limit: 10000}
-
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
-	transactionMock.TransactionResult = tm.ShortTransaction{ID: transactionID}
-
-	svc := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	svc := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	setupContextWithCookie(ctx, userID)
@@ -392,16 +374,12 @@ func TestUpdateTransactionUpdateError(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Debit}
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Debit}
+	mock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
+	mock.UpdateError = errors.New("update failed")
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
-	transactionMock.UpdateError = errors.New("update failed")
-
-	svc := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	svc := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	setupContextWithCookie(ctx, userID)
@@ -421,10 +399,10 @@ func TestUpdateTransactionUpdateError(t *testing.T) {
 func TestReadTransactionsRepositoryError(t *testing.T) {
 	userID := uuid.New()
 
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New("db error")
+	mock := NewTransactionsRepositoryMock()
+	mock.Error = errors.New("db error")
 
-	svc := NewTransactionsService(NewCategoriesRepositoryMock(), NewCreditcardsRepositoryMock(), transactionMock)
+	svc := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=1")
 	setupContextWithCookie(ctx, userID)
@@ -440,134 +418,10 @@ func TestReadTransactionsRepositoryError(t *testing.T) {
 	}
 }
 
-type CategoriesRepositoryMock struct {
-	Error            error
-	CategoryResult   cm.Category
-	CategoriesResult []cm.Category
-}
-
-func NewCategoriesRepositoryMock() CategoriesRepositoryMock {
-	return CategoriesRepositoryMock{
-		Error:            nil,
-		CategoryResult:   cm.Category{},
-		CategoriesResult: []cm.Category{},
-	}
-}
-
-func (c CategoriesRepositoryMock) Create(ctx context.Context, category cm.CreateCategory) (cm.Category, []e.ApiError) {
-	if c.Error != nil {
-		return cm.Category{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CategoryResult, nil
-}
-
-func (c CategoriesRepositoryMock) Read(ctx context.Context, userID uuid.UUID) ([]cm.Category, []e.ApiError) {
-	if c.Error != nil {
-		return []cm.Category{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CategoriesResult, nil
-}
-
-func (c CategoriesRepositoryMock) ReadByID(ctx context.Context, id uuid.UUID) (cm.Category, []e.ApiError) {
-	if c.Error != nil {
-		return cm.Category{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CategoryResult, nil
-}
-
-func (c CategoriesRepositoryMock) GetCountByUser(ctx context.Context, userID uuid.UUID) (int64, []e.ApiError) {
-	if c.Error != nil {
-		return 0, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return 1, nil
-}
-
-func (c CategoriesRepositoryMock) Update(ctx context.Context, category cm.Category) (cm.Category, []e.ApiError) {
-	if c.Error != nil {
-		return cm.Category{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CategoryResult, nil
-}
-
-func (c CategoriesRepositoryMock) Delete(ctx context.Context, id uuid.UUID) []e.ApiError {
-	if c.Error != nil {
-		return []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return nil
-}
-
-func (c CategoriesRepositoryMock) HasTransactionsByCategory(ctx context.Context, categoryID uuid.UUID) (bool, []e.ApiError) {
-	if c.Error != nil {
-		return false, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return false, nil
-}
-
-type CreditcardsRepositoryMock struct {
-	Error             error
-	CreditcardResult  crm.CreditCard
-	CreditcardsResult []crm.CreditCard
-}
-
-func NewCreditcardsRepositoryMock() CreditcardsRepositoryMock {
-	return CreditcardsRepositoryMock{
-		Error:             nil,
-		CreditcardResult:  crm.CreditCard{},
-		CreditcardsResult: []crm.CreditCard{},
-	}
-}
-
-func (c CreditcardsRepositoryMock) Create(ctx context.Context, creditcard crm.CreateCreditCard) (crm.CreditCard, []e.ApiError) {
-	if c.Error != nil {
-		return crm.CreditCard{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CreditcardResult, nil
-}
-
-func (c CreditcardsRepositoryMock) Read(ctx context.Context, userID uuid.UUID) ([]crm.CreditCard, []e.ApiError) {
-	if c.Error != nil {
-		return []crm.CreditCard{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CreditcardsResult, nil
-}
-
-func (c CreditcardsRepositoryMock) ReadCountByUser(ctx context.Context, userID uuid.UUID) (int, []e.ApiError) {
-	if c.Error != nil {
-		return 0, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return 1, nil
-}
-
-func (c CreditcardsRepositoryMock) ReadByID(ctx context.Context, id uuid.UUID) (crm.CreditCard, []e.ApiError) {
-	if c.Error != nil {
-		return crm.CreditCard{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CreditcardResult, nil
-}
-
-func (c CreditcardsRepositoryMock) Update(ctx context.Context, creditcard crm.CreditCard) (crm.CreditCard, []e.ApiError) {
-	if c.Error != nil {
-		return crm.CreditCard{}, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return c.CreditcardResult, nil
-}
-
-func (c CreditcardsRepositoryMock) Delete(ctx context.Context, id uuid.UUID) []e.ApiError {
-	if c.Error != nil {
-		return []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return nil
-}
-
-func (c CreditcardsRepositoryMock) HasTransactionsByCreditCard(ctx context.Context, creditCardID uuid.UUID) (bool, []e.ApiError) {
-	if c.Error != nil {
-		return false, []e.ApiError{e.CustomError{Message: c.Error.Error()}}
-	}
-	return false, nil
-}
-
 type TransactionsRepositoryMock struct {
 	Error                 error
+	CategoryError         error
+	CreditcardError       error
 	DeleteError           error
 	PayError              error
 	UpdateError           error
@@ -576,57 +430,76 @@ type TransactionsRepositoryMock struct {
 	TransactionsResult    []tm.Transaction
 	TransactionsCount     int64
 	Amount                float64
+	CategoryResult        cm.Category
+	CreditcardResult      crm.CreditCard
 }
 
-func NewTransactionsRepositoryMock() TransactionsRepositoryMock {
-	return TransactionsRepositoryMock{
+func NewTransactionsRepositoryMock() *TransactionsRepositoryMock {
+	return &TransactionsRepositoryMock{
 		Error:                 nil,
+		CategoryError:         nil,
+		CreditcardError:       nil,
 		UpdateError:           nil,
 		TransactionResult:     tm.ShortTransaction{},
 		TransactionFullResult: tm.Transaction{},
 		TransactionsResult:    []tm.Transaction{},
 		TransactionsCount:     0,
 		Amount:                0,
+		CategoryResult:        cm.Category{},
+		CreditcardResult:      crm.CreditCard{},
 	}
 }
 
-func (t TransactionsRepositoryMock) GetCreditcardTotalAmount(ctx context.Context, model tm.TransactionsCreditCardTotal) (float64, error) {
+func (t *TransactionsRepositoryMock) ReadCategoryByID(ctx context.Context, categoryID uuid.UUID) (cm.Category, []e.ApiError) {
+	if t.CategoryError != nil {
+		return cm.Category{}, []e.ApiError{e.CustomError{Message: t.CategoryError.Error()}}
+	}
+	return t.CategoryResult, nil
+}
+
+func (t *TransactionsRepositoryMock) ReadCreditCardByID(ctx context.Context, creditCardId uuid.UUID) (crm.CreditCard, []e.ApiError) {
+	if t.CreditcardError != nil {
+		return crm.CreditCard{}, []e.ApiError{e.CustomError{Message: t.CreditcardError.Error()}}
+	}
+	return t.CreditcardResult, nil
+}
+
+func (t *TransactionsRepositoryMock) GetCreditcardTotalAmount(ctx context.Context, model tm.TransactionsCreditCardTotal) (float64, error) {
 	if t.Error != nil {
 		return 0, t.Error
 	}
-
 	return t.Amount, nil
 }
 
-func (t TransactionsRepositoryMock) Create(ctx context.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError) {
+func (t *TransactionsRepositoryMock) CreateTransaction(ctx context.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError) {
 	if t.Error != nil {
 		return tm.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionResult, nil
 }
 
-func (t TransactionsRepositoryMock) Read(ctx context.Context, params m.PaginatedParams) ([]tm.Transaction, int64, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadTransactions(ctx context.Context, params m.PaginatedParams) ([]tm.Transaction, int64, []e.ApiError) {
 	if t.Error != nil {
 		return []tm.Transaction{}, 0, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionsResult, t.TransactionsCount, nil
 }
 
-func (t TransactionsRepositoryMock) ReadInToDates(ctx context.Context, params m.PaginatedParamsWithDateRange) ([]tm.Transaction, int64, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadTransactionsInToDates(ctx context.Context, params m.PaginatedParamsWithDateRange) ([]tm.Transaction, int64, []e.ApiError) {
 	if t.Error != nil {
 		return []tm.Transaction{}, 0, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionsResult, t.TransactionsCount, nil
 }
 
-func (t TransactionsRepositoryMock) ReadById(ctx context.Context, id uuid.UUID) (tm.Transaction, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadTransactionById(ctx context.Context, id uuid.UUID) (tm.Transaction, []e.ApiError) {
 	if t.Error != nil {
 		return tm.Transaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionFullResult, nil
 }
 
-func (t TransactionsRepositoryMock) Update(ctx context.Context, transaction tm.Transaction) (tm.ShortTransaction, []e.ApiError) {
+func (t *TransactionsRepositoryMock) UpdateTransaction(ctx context.Context, transaction tm.Transaction) (tm.ShortTransaction, []e.ApiError) {
 	if t.UpdateError != nil {
 		return tm.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.UpdateError.Error()}}
 	}
@@ -636,7 +509,7 @@ func (t TransactionsRepositoryMock) Update(ctx context.Context, transaction tm.T
 	return t.TransactionResult, nil
 }
 
-func (t TransactionsRepositoryMock) Delete(ctx context.Context, id uuid.UUID) []e.ApiError {
+func (t *TransactionsRepositoryMock) DeleteTransaction(ctx context.Context, id uuid.UUID) []e.ApiError {
 	if t.DeleteError != nil {
 		return []e.ApiError{e.CustomError{Message: t.DeleteError.Error()}}
 	}
@@ -646,7 +519,7 @@ func (t TransactionsRepositoryMock) Delete(ctx context.Context, id uuid.UUID) []
 	return nil
 }
 
-func (t TransactionsRepositoryMock) Pay(ctx context.Context, id uuid.UUID, paid bool) []e.ApiError {
+func (t *TransactionsRepositoryMock) PayTransaction(ctx context.Context, id uuid.UUID, paid bool) []e.ApiError {
 	if t.PayError != nil {
 		return []e.ApiError{e.CustomError{Message: t.PayError.Error()}}
 	}
@@ -687,8 +560,8 @@ func TestCreateTransactionSuccess(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -697,10 +570,7 @@ func TestCreateTransactionSuccess(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionResult = tm.ShortTransaction{
+	mock.TransactionResult = tm.ShortTransaction{
 		ID:        transactionID,
 		Name:      request.Name,
 		Date:      request.Date,
@@ -710,7 +580,7 @@ func TestCreateTransactionSuccess(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -739,11 +609,9 @@ func TestCreateTransactionMissingUserCookie(t *testing.T) {
 		CategoryID: uuid.New(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 
@@ -770,13 +638,10 @@ func TestCreateTransactionCategoryNotFound(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.Error = errors.New(string(st.ErrNoRows))
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryError = errors.New(string(st.ErrNoRows))
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -804,8 +669,8 @@ func TestCreateTransactionCreditRequiresCreditcard(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
@@ -815,10 +680,7 @@ func TestCreateTransactionCreditRequiresCreditcard(t *testing.T) {
 		UpdatedAt:       time.Now(),
 	}
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -844,8 +706,8 @@ func TestCreateTransactionDebitCannotHaveCreditcard(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -854,16 +716,13 @@ func TestCreateTransactionDebitCannotHaveCreditcard(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = crm.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Name:   "Test Card",
 	}
-	transactionMock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -890,8 +749,8 @@ func TestCreateTransactionWithValidCreditcard(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
@@ -900,17 +759,13 @@ func TestCreateTransactionWithValidCreditcard(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = crm.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Name:   "Test Card",
 		Limit:  10000,
 	}
-
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionResult = tm.ShortTransaction{
+	mock.TransactionResult = tm.ShortTransaction{
 		ID:        transactionID,
 		Name:      request.Name,
 		Date:      request.Date,
@@ -920,7 +775,7 @@ func TestCreateTransactionWithValidCreditcard(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -973,13 +828,11 @@ func TestReadTransactionsSuccess(t *testing.T) {
 		},
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionsResult = transactions
-	transactionMock.TransactionsCount = 2
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionsResult = transactions
+	mock.TransactionsCount = 2
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=1")
 	setupContextWithCookie(ctx, userID)
@@ -1000,11 +853,9 @@ func TestReadTransactionsSuccess(t *testing.T) {
 }
 
 func TestReadTransactionsMissingUserCookie(t *testing.T) {
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=1")
 
@@ -1022,11 +873,9 @@ func TestReadTransactionsMissingUserCookie(t *testing.T) {
 func TestReadTransactionsInvalidPage(t *testing.T) {
 	userID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=invalid")
 	setupContextWithCookie(ctx, userID)
@@ -1060,13 +909,11 @@ func TestReadTransactionsWithDateRange(t *testing.T) {
 		},
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionsResult = transactions
-	transactionMock.TransactionsCount = 1
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionsResult = transactions
+	mock.TransactionsCount = 1
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	startDate := now.Format(time.DateOnly)
 	endDate := now.Format(time.DateOnly)
@@ -1107,12 +954,10 @@ func TestReadByIdTransactionSuccess(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = transaction
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1137,12 +982,10 @@ func TestReadByIdTransactionNotFound(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New(string(st.ErrNoRows))
+	mock := NewTransactionsRepositoryMock()
+	mock.Error = errors.New(string(st.ErrNoRows))
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1186,8 +1029,8 @@ func TestUpdateTransactionSuccess(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -1196,11 +1039,8 @@ func TestUpdateTransactionSuccess(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = originalTransaction
-	transactionMock.TransactionResult = tm.ShortTransaction{
+	mock.TransactionFullResult = originalTransaction
+	mock.TransactionResult = tm.ShortTransaction{
 		ID:        transactionID,
 		Name:      request.Name,
 		Date:      request.Date,
@@ -1210,7 +1050,7 @@ func TestUpdateTransactionSuccess(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1244,8 +1084,8 @@ func TestUpdateTransactionNotFound(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -1254,12 +1094,9 @@ func TestUpdateTransactionNotFound(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.Error = errors.New(string(st.ErrNoRows))
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New(string(st.ErrNoRows))
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1295,12 +1132,10 @@ func TestDeleteTransactionSuccess(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = transaction
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1321,12 +1156,10 @@ func TestDeleteTransactionNotFound(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New(string(st.ErrNoRows))
+	mock := NewTransactionsRepositoryMock()
+	mock.Error = errors.New(string(st.ErrNoRows))
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1362,12 +1195,10 @@ func TestPayTransactionSuccess(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = transaction
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String()+"/pay")
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1388,12 +1219,10 @@ func TestPayTransactionNotFound(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New(string(st.ErrNoRows))
+	mock := NewTransactionsRepositoryMock()
+	mock.Error = errors.New(string(st.ErrNoRows))
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String()+"/pay")
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1427,12 +1256,10 @@ func TestPayTransactionToggleStatus(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = transaction
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String()+"/pay")
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1463,8 +1290,8 @@ func TestCreateTransactionRepositoryError(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -1473,12 +1300,9 @@ func TestCreateTransactionRepositoryError(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.Error = errors.New("database error")
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New("database error")
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -1505,11 +1329,9 @@ func TestCreateTransactionInvalidJSON(t *testing.T) {
 	ctx.Request = req
 	setupContextWithCookie(ctx, userID)
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	_, status, errs := service.Create(ctx)
 
@@ -1534,13 +1356,10 @@ func TestCreateTransactionCategoryRepositoryError(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.Error = errors.New("database error")
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryError = errors.New("database error")
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -1570,8 +1389,8 @@ func TestCreateTransactionCreditcardRepositoryError(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
@@ -1580,13 +1399,9 @@ func TestCreateTransactionCreditcardRepositoryError(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.CreditcardError = errors.New("database error")
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.Error = errors.New("database error")
-
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -1605,11 +1420,9 @@ func TestCreateTransactionCreditcardRepositoryError(t *testing.T) {
 func TestReadTransactionsInvalidStartDate(t *testing.T) {
 	userID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=1&start_date=invalid&end_date=2024-01-01")
 	setupContextWithCookie(ctx, userID)
@@ -1650,8 +1463,8 @@ func TestUpdateTransactionRepositoryError(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -1660,13 +1473,10 @@ func TestUpdateTransactionRepositoryError(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.TransactionFullResult = originalTransaction
+	mock.UpdateError = errors.New("database error")
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = originalTransaction
-	transactionMock.Error = errors.New("database error")
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1686,11 +1496,9 @@ func TestUpdateTransactionRepositoryError(t *testing.T) {
 func TestReadTransactionsInvalidEndDate(t *testing.T) {
 	userID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions?limit=10&page=1&start_date=2024-01-01&end_date=invalid")
 	setupContextWithCookie(ctx, userID)
@@ -1710,12 +1518,10 @@ func TestReadByIdTransactionRepositoryError(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.Error = errors.New("database error")
+	mock := NewTransactionsRepositoryMock()
+	mock.Error = errors.New("database error")
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1745,8 +1551,8 @@ func TestCreateTransactionWrongCategoryUser(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          otherUserID,
 		TransactionType: m.Debit,
@@ -1756,10 +1562,7 @@ func TestCreateTransactionWrongCategoryUser(t *testing.T) {
 		UpdatedAt:       time.Now(),
 	}
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -1790,8 +1593,8 @@ func TestCreateTransactionWrongCreditcardUser(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
@@ -1800,17 +1603,13 @@ func TestCreateTransactionWrongCreditcardUser(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = crm.CreditCard{
 		ID:     creditcardID,
 		UserID: otherUserID,
 		Name:   "Test Card",
 	}
 
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -1852,8 +1651,8 @@ func TestUpdateTransactionWrongUser(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Debit,
@@ -1862,12 +1661,9 @@ func TestUpdateTransactionWrongUser(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.TransactionFullResult = transaction
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1902,12 +1698,10 @@ func TestDeleteTransactionWrongUser(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = transaction
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1942,12 +1736,10 @@ func TestPayTransactionWrongUser(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = transaction
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = transaction
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String()+"/pay")
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -1976,11 +1768,9 @@ func TestUpdateTransactionInvalidJSON(t *testing.T) {
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
 	setupContextWithCookie(ctx, userID)
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	_, status, errs := service.Update(ctx)
 
@@ -1996,11 +1786,9 @@ func TestUpdateTransactionInvalidJSON(t *testing.T) {
 func TestDeleteTransactionMissingUserCookie(t *testing.T) {
 	transactionID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -2019,11 +1807,9 @@ func TestDeleteTransactionMissingUserCookie(t *testing.T) {
 func TestPayTransactionMissingUserCookie(t *testing.T) {
 	transactionID := uuid.New()
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String()+"/pay")
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -2050,11 +1836,9 @@ func TestUpdateTransactionMissingUserCookie(t *testing.T) {
 		CategoryID: uuid.New(),
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	creditcardMock := NewCreditcardsRepositoryMock()
-	transactionMock := NewTransactionsRepositoryMock()
+	mock := NewTransactionsRepositoryMock()
 
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "PUT", "/transactions/"+transactionID.String(), request)
 	ctx.Params = gin.Params{{Key: "id", Value: transactionID.String()}}
@@ -2084,8 +1868,8 @@ func TestReadCreditcardError(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
@@ -2094,13 +1878,9 @@ func TestReadCreditcardError(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.CreditcardError = errors.New("database error")
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.Error = errors.New("database error")
-
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -2130,8 +1910,8 @@ func TestCreateTransactionReadCreditcardNotFound(t *testing.T) {
 		CreditcardID: &creditcardID,
 	}
 
-	categoryMock := NewCategoriesRepositoryMock()
-	categoryMock.CategoryResult = cm.Category{
+	mock := NewTransactionsRepositoryMock()
+	mock.CategoryResult = cm.Category{
 		ID:              categoryID,
 		UserID:          userID,
 		TransactionType: m.Credit,
@@ -2140,13 +1920,9 @@ func TestCreateTransactionReadCreditcardNotFound(t *testing.T) {
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+	mock.CreditcardError = errors.New(string(st.ErrNoRows))
 
-	creditcardMock := NewCreditcardsRepositoryMock()
-	creditcardMock.Error = errors.New(string(st.ErrNoRows))
-
-	transactionMock := NewTransactionsRepositoryMock()
-
-	service := NewTransactionsService(categoryMock, creditcardMock, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := setupTestContext(t, "POST", "/transactions", request)
 	setupContextWithCookie(ctx, userID)
@@ -2166,14 +1942,14 @@ func TestDeleteTransactionRepositoryError(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = tm.Transaction{
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = tm.Transaction{
 		ID:     transactionID,
 		UserID: userID,
 	}
-	transactionMock.DeleteError = errors.New("delete failed")
+	mock.DeleteError = errors.New("delete failed")
 
-	service := NewTransactionsService(nil, nil, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	setupContextWithCookie(ctx, userID)
@@ -2194,14 +1970,14 @@ func TestPayTransactionRepositoryError(t *testing.T) {
 	userID := uuid.New()
 	transactionID := uuid.New()
 
-	transactionMock := NewTransactionsRepositoryMock()
-	transactionMock.TransactionFullResult = tm.Transaction{
+	mock := NewTransactionsRepositoryMock()
+	mock.TransactionFullResult = tm.Transaction{
 		ID:     transactionID,
 		UserID: userID,
 	}
-	transactionMock.PayError = errors.New("pay failed")
+	mock.PayError = errors.New("pay failed")
 
-	service := NewTransactionsService(nil, nil, transactionMock)
+	service := NewTransactionsService(mock)
 
 	ctx := getTestContextForGet(t, "/transactions/"+transactionID.String())
 	setupContextWithCookie(ctx, userID)
