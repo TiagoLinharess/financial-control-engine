@@ -2,15 +2,15 @@ package repositories
 
 import (
 	"context"
+	"financialcontrol/internal/categories"
 	e "financialcontrol/internal/models/errors"
-	"financialcontrol/internal/store/dtos"
+	"financialcontrol/internal/repositories/dtos"
 	pgs "financialcontrol/internal/store/pgstore"
-	cm "financialcontrol/internal/v1/categories/models"
 
 	"github.com/google/uuid"
 )
 
-func (r Repository) CreateCategory(context context.Context, data cm.CreateCategory) (cm.Category, []e.ApiError) {
+func (r Repository) CreateCategory(context context.Context, data categories.CreateCategory) (categories.Category, []e.ApiError) {
 	param := pgs.CreateCategoryParams{
 		UserID:          data.UserID,
 		TransactionType: int32(data.TransactionType),
@@ -21,37 +21,37 @@ func (r Repository) CreateCategory(context context.Context, data cm.CreateCatego
 	category, err := r.store.CreateCategory(context, param)
 
 	if err != nil {
-		return cm.Category{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return categories.Category{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
 	return dtos.StoreCategoryModelToCategory(category), nil
 }
 
-func (r Repository) ReadCategories(context context.Context, userID uuid.UUID) ([]cm.Category, []e.ApiError) {
-	categories, err := r.store.GetCategoriesByUserID(context, userID)
+func (r Repository) ReadCategories(context context.Context, userID uuid.UUID) ([]categories.Category, []e.ApiError) {
+	rows, err := r.store.GetCategoriesByUserID(context, userID)
 
 	if err != nil {
 		return nil, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
-	if len(categories) == 0 {
-		return []cm.Category{}, nil
+	if len(rows) == 0 {
+		return []categories.Category{}, nil
 	}
 
-	categoriesResponse := make([]cm.Category, 0, len(categories))
+	result := make([]categories.Category, 0, len(rows))
 
-	for _, category := range categories {
-		categoriesResponse = append(categoriesResponse, dtos.StoreCategoryModelToCategory(category))
+	for _, row := range rows {
+		result = append(result, dtos.StoreCategoryModelToCategory(row))
 	}
 
-	return categoriesResponse, nil
+	return result, nil
 }
 
-func (r Repository) ReadCategoryByID(context context.Context, categoryID uuid.UUID) (cm.Category, []e.ApiError) {
+func (r Repository) ReadCategoryByID(context context.Context, categoryID uuid.UUID) (categories.Category, []e.ApiError) {
 	category, err := r.store.GetCategoryByID(context, categoryID)
 
 	if err != nil {
-		return cm.Category{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return categories.Category{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
 	return dtos.StoreCategoryModelToCategory(category), nil
@@ -67,7 +67,7 @@ func (r Repository) GetCategoryCountByUser(context context.Context, userID uuid.
 	return count, nil
 }
 
-func (r Repository) UpdateCategory(context context.Context, category cm.Category) (cm.Category, []e.ApiError) {
+func (r Repository) UpdateCategory(context context.Context, category categories.Category) (categories.Category, []e.ApiError) {
 	param := pgs.UpdateCategoryParams{
 		ID:              category.ID,
 		Name:            category.Name,
@@ -78,7 +78,7 @@ func (r Repository) UpdateCategory(context context.Context, category cm.Category
 	updatedCategory, err := r.store.UpdateCategory(context, param)
 
 	if err != nil {
-		return cm.Category{}, []e.ApiError{e.StoreError{Message: err.Error()}}
+		return categories.Category{}, []e.ApiError{e.StoreError{Message: err.Error()}}
 	}
 
 	return dtos.StoreCategoryModelToCategory(updatedCategory), nil

@@ -1,13 +1,13 @@
 package dtos
 
 import (
+	"financialcontrol/internal/categories"
 	m "financialcontrol/internal/models"
 	pgs "financialcontrol/internal/store/pgstore"
-	cm "financialcontrol/internal/v1/categories/models"
 )
 
-func StoreCategoryModelToCategory(category pgs.Category) cm.Category {
-	return cm.Category{
+func StoreCategoryModelToCategory(category pgs.Category) categories.Category {
+	return categories.Category{
 		ID:              category.ID,
 		UserID:          category.UserID,
 		TransactionType: m.TransactionType(category.TransactionType),

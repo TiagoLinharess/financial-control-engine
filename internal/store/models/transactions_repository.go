@@ -2,9 +2,9 @@ package models
 
 import (
 	"context"
+	"financialcontrol/internal/categories"
 	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
-	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
 
@@ -12,7 +12,7 @@ import (
 )
 
 type TransactionsRepository interface {
-	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (cm.Category, []e.ApiError)
+	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (categories.Category, []e.ApiError)
 	ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (cr.CreditCard, []e.ApiError)
 	CreateTransaction(context context.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError)
 	ReadTransactions(context context.Context, params m.PaginatedParams) ([]tm.Transaction, int64, []e.ApiError)

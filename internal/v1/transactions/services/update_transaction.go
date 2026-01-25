@@ -1,8 +1,8 @@
 package services
 
 import (
+	"financialcontrol/internal/categories"
 	e "financialcontrol/internal/models/errors"
-	cm "financialcontrol/internal/v1/categories/models"
 	crm "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
 	"net/http"
@@ -32,7 +32,7 @@ func (t TransactionsService) Update(ctx *gin.Context) (tm.TransactionResponse, i
 	transaction.Name = relations.Request.Name
 	transaction.Date = relations.Request.Date
 	transaction.Paid = relations.Request.Paid
-	transaction.Category = cm.ShortCategory(relations.CategoryResponse)
+	transaction.Category = categories.ShortCategory(relations.CategoryResponse)
 	transaction.Creditcard = creditcard
 
 	transactionUpdated, errs := t.repository.UpdateTransaction(ctx, transaction)

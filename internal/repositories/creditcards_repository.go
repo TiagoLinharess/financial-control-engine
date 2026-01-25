@@ -3,7 +3,7 @@ package repositories
 import (
 	c "context"
 	e "financialcontrol/internal/models/errors"
-	"financialcontrol/internal/store/dtos"
+	"financialcontrol/internal/repositories/dtos"
 	pgs "financialcontrol/internal/store/pgstore"
 	u "financialcontrol/internal/utils"
 	cm "financialcontrol/internal/v1/creditcards/models"

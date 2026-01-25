@@ -40,7 +40,7 @@ func (c CreditCardsService) read(ctx *gin.Context) (cm.CreditCard, int, []e.ApiE
 
 	if len(errs) > 0 {
 		isNotFoundErr := u.FindIf(errs, func(err e.ApiError) bool {
-			return err.String() == string(sm.ErrNoRows)
+			return err.String() == constants.StoreErrorNoRowsMsg
 		})
 		if isNotFoundErr {
 			return cm.CreditCard{}, http.StatusNotFound, creditcardNotFoundErr

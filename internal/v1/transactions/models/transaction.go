@@ -1,7 +1,7 @@
 package models
 
 import (
-	cm "financialcontrol/internal/v1/categories/models"
+	"financialcontrol/internal/categories"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	"time"
 
@@ -15,7 +15,7 @@ type Transaction struct {
 	Date                   time.Time
 	Value                  float64
 	Paid                   bool
-	Category               cm.ShortCategory
+	Category               categories.ShortCategory
 	Creditcard             *cr.ShortCreditCard
 	MonthlyTransaction     *uuid.UUID
 	AnnualTransaction      *uuid.UUID

@@ -1,12 +1,11 @@
 package api
 
 import (
+	"financialcontrol/internal/categories"
+	"financialcontrol/internal/repositories"
 	"financialcontrol/internal/store"
 	sm "financialcontrol/internal/store/models"
 	"financialcontrol/internal/store/pgstore"
-	r "financialcontrol/internal/store/repositories"
-	cac "financialcontrol/internal/v1/categories/controllers"
-	cas "financialcontrol/internal/v1/categories/services"
 	crc "financialcontrol/internal/v1/creditcards/controllers"
 	crs "financialcontrol/internal/v1/creditcards/services"
 	cmtc "financialcontrol/internal/v1/monthly_transations/controllers"
@@ -21,7 +20,7 @@ import (
 
 type Api struct {
 	Router                        *gin.Engine
-	categoriesController          *cac.CategoriesController
+	categoriesHandler             *categories.Handler
 	creditCardController          *crc.CreditCardsController
 	transactionsController        *ctc.TransactionsController
 	monthlyTransactionsController *cmtc.MonthlyTransactionsController
@@ -32,20 +31,20 @@ func NewApi(
 	pool *pgxpool.Pool,
 ) Api {
 	store := pgstore.New(pool)
-	repository := r.NewRepository(store)
+	repository := repositories.NewRepository(store)
 
 	return Api{
 		Router:                        router,
-		categoriesController:          createCategory(repository),
+		categoriesHandler:             createCategory(repository),
 		creditCardController:          createCreditCard(repository),
 		transactionsController:        createTransactions(repository),
 		monthlyTransactionsController: createMonthlyTransactions(store),
 	}
 }
 
-func createCategory(repository sm.CategoriesRepository) *cac.CategoriesController {
-	service := cas.NewCategoriesService(repository)
-	return cac.NewCategoriesController(service)
+func createCategory(repository categories.Repository) *categories.Handler {
+	service := categories.NewService(repository)
+	return categories.NewHandler(service)
 }
 
 func createCreditCard(repository sm.CreditCardsRepository) *crc.CreditCardsController {

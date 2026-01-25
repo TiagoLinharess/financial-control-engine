@@ -5,11 +5,11 @@ func (a *Api) RegisterRoutes() {
 
 	categories := api.Group("/categories")
 	{
-		categories.POST("/", a.categoriesController.Create)
-		categories.GET("/", a.categoriesController.Read)
-		categories.GET("/:id", a.categoriesController.ReadByID)
-		categories.PUT("/:id", a.categoriesController.Update)
-		categories.DELETE("/:id", a.categoriesController.Delete)
+		categories.POST("/", a.categoriesHandler.Create)
+		categories.GET("/", a.categoriesHandler.Read)
+		categories.GET("/:id", a.categoriesHandler.ReadByID)
+		categories.PUT("/:id", a.categoriesHandler.Update)
+		categories.DELETE("/:id", a.categoriesHandler.Delete)
 	}
 
 	creditcards := api.Group("/creditcards")

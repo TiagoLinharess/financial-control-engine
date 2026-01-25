@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"financialcontrol/internal/api"
 	"financialcontrol/internal/constants"
-	"financialcontrol/internal/v1/api"
 	"fmt"
 	"os"
 

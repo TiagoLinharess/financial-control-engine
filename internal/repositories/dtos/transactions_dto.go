@@ -1,10 +1,10 @@
 package dtos
 
 import (
+	"financialcontrol/internal/categories"
 	m "financialcontrol/internal/models"
 	pgs "financialcontrol/internal/store/pgstore"
 	u "financialcontrol/internal/utils"
-	cm "financialcontrol/internal/v1/categories/models"
 	cr "financialcontrol/internal/v1/creditcards/models"
 	tm "financialcontrol/internal/v1/transactions/models"
 )
@@ -47,7 +47,7 @@ func StoreTransactionPaginatedToStoreTransaction(transaction pgs.ListTransaction
 }
 
 func StoreTransactionToTransaction(transaction pgs.GetTransactionByIDRow) tm.Transaction {
-	category := cm.ShortCategory{
+	category := categories.ShortCategory{
 		ID:              *u.PgTypeUUIDToUUID(transaction.CategoryID),
 		TransactionType: m.TransactionType(transaction.CategoryTransactionType.Int32),
 		Name:            transaction.CategoryName.String,

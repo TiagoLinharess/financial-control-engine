@@ -1,7 +1,7 @@
 package models
 
 import (
-	cm "financialcontrol/internal/v1/categories/models"
+	"financialcontrol/internal/categories"
 	cr "financialcontrol/internal/v1/creditcards/models"
 
 	"github.com/google/uuid"
@@ -10,6 +10,6 @@ import (
 type TransactionRelations struct {
 	UserID             uuid.UUID
 	Request            TransactionRequest
-	CategoryResponse   cm.ShortCategoryResponse
+	CategoryResponse   categories.ShortCategoryResponse
 	CreditcardResponse *cr.ShortCreditCardResponse
 }

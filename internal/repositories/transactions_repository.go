@@ -4,7 +4,7 @@ import (
 	c "context"
 	m "financialcontrol/internal/models"
 	e "financialcontrol/internal/models/errors"
-	"financialcontrol/internal/store/dtos"
+	"financialcontrol/internal/repositories/dtos"
 	pgs "financialcontrol/internal/store/pgstore"
 	u "financialcontrol/internal/utils"
 	tm "financialcontrol/internal/v1/transactions/models"
