@@ -1,18 +1,18 @@
-package controllers
+package handlers
 
 import (
-	m "financialcontrol/internal/models"
+	"financialcontrol/internal/models"
+	"financialcontrol/internal/services"
 	"financialcontrol/internal/utils"
-	cm "financialcontrol/internal/v1/creditcards/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CreditCardsController struct {
-	service cm.CreditCardsService
+	service services.CreditCard
 }
 
-func NewCreditCardsController(service cm.CreditCardsService) *CreditCardsController {
+func NewCreditCardsController(service services.CreditCard) *CreditCardsController {
 	return &CreditCardsController{service: service}
 }
 
@@ -38,5 +38,5 @@ func (c *CreditCardsController) Update(ctx *gin.Context) {
 
 func (c *CreditCardsController) Delete(ctx *gin.Context) {
 	status, err := c.service.Delete(ctx)
-	utils.SendResponse(ctx, m.NewResponseSuccess(), status, err)
+	utils.SendResponse(ctx, models.NewResponseSuccess(), status, err)
 }

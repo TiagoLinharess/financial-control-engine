@@ -1,8 +1,8 @@
 package utils
 
 import (
+	"financialcontrol/internal/errors"
 	"financialcontrol/internal/models"
-	"financialcontrol/internal/models/errors"
 
 	"github.com/gin-gonic/gin"
 )

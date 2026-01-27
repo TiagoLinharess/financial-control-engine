@@ -1,6 +1,6 @@
 package models
 
-import "financialcontrol/internal/models/errors"
+import "financialcontrol/internal/errors"
 
 type Validator interface {
 	Validate() []errors.ApiError

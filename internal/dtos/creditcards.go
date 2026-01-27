@@ -1,12 +1,37 @@
-package models
+package dtos
 
 import (
 	"financialcontrol/internal/constants"
-	"financialcontrol/internal/models/errors"
+	"financialcontrol/internal/errors"
 	"financialcontrol/internal/utils"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+type ShortCreditCardResponse struct {
+	ID               uuid.UUID `json:"id"`
+	Name             string    `json:"name"`
+	FirstFourNumbers string    `json:"first_four_numbers"`
+	Limit            float64   `json:"limit"`
+	CloseDay         int32     `json:"close_day"`
+	ExpireDay        int32     `json:"expire_day"`
+	BackgroundColor  string    `json:"background_color"`
+	TextColor        string    `json:"text_color"`
+}
+
+type CreditCardResponse struct {
+	ID               uuid.UUID `json:"id"`
+	Name             string    `json:"name"`
+	FirstFourNumbers string    `json:"first_four_numbers"`
+	Limit            float64   `json:"limit"`
+	CloseDay         int32     `json:"close_day"`
+	ExpireDay        int32     `json:"expire_day"`
+	BackgroundColor  string    `json:"background_color"`
+	TextColor        string    `json:"text_color"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
 
 type CreditCardRequest struct {
 	Name             string  `json:"name"`
@@ -62,17 +87,4 @@ func (c CreditCardRequest) Validate() []errors.ApiError {
 	}
 
 	return errs
-}
-
-func (c CreditCardRequest) ToCreateModel(userID uuid.UUID) CreateCreditCard {
-	return CreateCreditCard{
-		UserID:           userID,
-		Name:             c.Name,
-		FirstFourNumbers: c.FirstFourNumbers,
-		Limit:            c.Limit,
-		CloseDay:         c.CloseDay,
-		ExpireDay:        c.ExpireDay,
-		BackgroundColor:  c.BackgroundColor,
-		TextColor:        c.TextColor,
-	}
 }

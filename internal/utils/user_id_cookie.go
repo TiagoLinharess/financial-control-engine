@@ -2,7 +2,7 @@ package utils
 
 import (
 	"financialcontrol/internal/constants"
-	"financialcontrol/internal/models/errors"
+	"financialcontrol/internal/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
