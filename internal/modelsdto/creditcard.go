@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func ShortCreditCardToResponse(model *models.ShortCreditCard) *dtos.ShortCreditCardResponse {
+func ShortCreditCardResponseFromShortCreditCard(model *models.ShortCreditCard) *dtos.ShortCreditCardResponse {
 	return &dtos.ShortCreditCardResponse{
 		ID:               model.ID,
 		Name:             model.Name,
@@ -20,7 +20,7 @@ func ShortCreditCardToResponse(model *models.ShortCreditCard) *dtos.ShortCreditC
 	}
 }
 
-func CreditCardRequestToCreateModel(request dtos.CreditCardRequest, userID uuid.UUID) models.CreateCreditCard {
+func CreateCreditCardFromCreditCardRequest(request dtos.CreditCardRequest, userID uuid.UUID) models.CreateCreditCard {
 	return models.CreateCreditCard{
 		UserID:           userID,
 		Name:             request.Name,
@@ -33,7 +33,7 @@ func CreditCardRequestToCreateModel(request dtos.CreditCardRequest, userID uuid.
 	}
 }
 
-func CreditCardToResponse(model models.CreditCard) dtos.CreditCardResponse {
+func CreditCardResponseFromCreditCard(model models.CreditCard) dtos.CreditCardResponse {
 	return dtos.CreditCardResponse{
 		ID:               model.ID,
 		Name:             model.Name,
@@ -48,7 +48,7 @@ func CreditCardToResponse(model models.CreditCard) dtos.CreditCardResponse {
 	}
 }
 
-func CreditCardToShortResponse(model models.CreditCard) dtos.ShortCreditCardResponse {
+func ShortCreditCardResponseFromCreditCard(model models.CreditCard) dtos.ShortCreditCardResponse {
 	return dtos.ShortCreditCardResponse{
 		ID:               model.ID,
 		Name:             model.Name,

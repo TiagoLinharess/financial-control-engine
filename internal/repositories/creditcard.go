@@ -4,7 +4,6 @@ import (
 	"context"
 	"financialcontrol/internal/errors"
 	"financialcontrol/internal/models"
-	"financialcontrol/internal/repositories/dtos"
 	"financialcontrol/internal/store/pgstore"
 	"financialcontrol/internal/utils"
 
@@ -39,7 +38,7 @@ func (r Repository) CreateCreditCard(context context.Context, creditCard models.
 		return models.CreditCard{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
 	}
 
-	return dtos.StoreCreditcardToCreditcard(createdCreditCard), nil
+	return storeCreditcardToCreditcard(createdCreditCard), nil
 }
 
 func (r Repository) ReadCreditCards(context context.Context, userId uuid.UUID) ([]models.CreditCard, []errors.ApiError) {
@@ -56,7 +55,7 @@ func (r Repository) ReadCreditCards(context context.Context, userId uuid.UUID) (
 	creditCardsResponse := make([]models.CreditCard, 0, len(creditCards))
 
 	for _, creditCard := range creditCards {
-		creditCardsResponse = append(creditCardsResponse, dtos.StoreCreditcardToCreditcard(creditCard))
+		creditCardsResponse = append(creditCardsResponse, storeCreditcardToCreditcard(creditCard))
 	}
 
 	return creditCardsResponse, nil
@@ -69,7 +68,7 @@ func (r Repository) ReadCreditCardByID(context context.Context, creditCardId uui
 		return models.CreditCard{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
 	}
 
-	return dtos.StoreCreditcardToCreditcard(creditCard), nil
+	return storeCreditcardToCreditcard(creditCard), nil
 }
 
 func (r Repository) ReadCountByUser(context context.Context, userId uuid.UUID) (int, []errors.ApiError) {
@@ -100,7 +99,7 @@ func (r Repository) UpdateCreditCard(context context.Context, creditCard models.
 		return models.CreditCard{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
 	}
 
-	return dtos.StoreCreditcardToCreditcard(updatedCreditCard), nil
+	return storeCreditcardToCreditcard(updatedCreditCard), nil
 }
 
 func (r Repository) DeleteCreditCard(context context.Context, creditCardId uuid.UUID) []errors.ApiError {
@@ -121,4 +120,20 @@ func (r Repository) HasTransactionsByCreditCard(context context.Context, creditC
 	}
 
 	return hasTransactions, nil
+}
+
+func storeCreditcardToCreditcard(storeModel pgstore.CreditCard) models.CreditCard {
+	return models.CreditCard{
+		ID:               storeModel.ID,
+		UserID:           storeModel.UserID,
+		Name:             storeModel.Name,
+		FirstFourNumbers: storeModel.FirstFourNumbers,
+		Limit:            storeModel.CreditLimit,
+		CloseDay:         storeModel.CloseDay,
+		ExpireDay:        storeModel.ExpireDay,
+		BackgroundColor:  storeModel.BackgroundColor,
+		TextColor:        storeModel.TextColor,
+		CreatedAt:        storeModel.CreatedAt.Time,
+		UpdatedAt:        storeModel.UpdatedAt.Time,
+	}
 }

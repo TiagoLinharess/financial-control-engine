@@ -1,13 +1,35 @@
-package models
+package dtos
 
 import (
 	"financialcontrol/internal/constants"
-	"financialcontrol/internal/models/errors"
+	"financialcontrol/internal/errors"
 	"financialcontrol/internal/utils"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type TransactionRelations struct {
+	UserID             uuid.UUID
+	Request            TransactionRequest
+	CategoryResponse   ShortCategoryResponse
+	CreditcardResponse *ShortCreditCardResponse
+}
+
+type TransactionResponse struct {
+	ID                     uuid.UUID                `json:"id"`
+	Name                   string                   `json:"name"`
+	Date                   time.Time                `json:"date"`
+	Value                  float64                  `json:"value"`
+	Paid                   bool                     `json:"paid"`
+	Category               ShortCategoryResponse    `json:"category"`
+	Creditcard             *ShortCreditCardResponse `json:"creditcard"`
+	MonthlyTransaction     *uuid.UUID               `json:"monthly_transaction,omitempty"`
+	AnnualTransaction      *uuid.UUID               `json:"annual_transaction,omitempty"`
+	InstallmentTransaction *uuid.UUID               `json:"installment_transaction,omitempty"`
+	CreatedAt              time.Time                `json:"created_at"`
+	UpdatedAt              time.Time                `json:"updated_at"`
+}
 
 type TransactionRequest struct {
 	Name                      string     `json:"name"`
@@ -41,19 +63,4 @@ func (t TransactionRequest) Validate() []errors.ApiError {
 	}
 
 	return errs
-}
-
-func (t TransactionRequest) ToCreateModel(userID uuid.UUID) CreateTransaction {
-	return CreateTransaction{
-		UserID:                    userID,
-		Name:                      t.Name,
-		Date:                      t.Date,
-		Value:                     t.Value,
-		Paid:                      t.Paid,
-		CategoryID:                t.CategoryID,
-		CreditcardID:              t.CreditcardID,
-		MonthlyTransactionsID:     t.MonthlyTransactionsID,
-		AnnualTransactionsID:      t.AnnualTransactionsID,
-		InstallmentTransactionsID: t.InstallmentTransactionsID,
-	}
 }

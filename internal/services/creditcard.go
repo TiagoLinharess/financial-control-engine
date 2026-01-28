@@ -26,7 +26,7 @@ type creditCard struct {
 	repository repositories.CreditCard
 }
 
-func NewCreditCardService(repository repositories.CreditCard) CreditCard {
+func NewCreditCardsService(repository repositories.CreditCard) CreditCard {
 	return &creditCard{repository: repository}
 }
 
@@ -53,7 +53,7 @@ func (c creditCard) Create(ctx *gin.Context) (dtos.CreditCardResponse, int, []er
 		return dtos.CreditCardResponse{}, http.StatusBadRequest, errs
 	}
 
-	model := modelsdto.CreditCardRequestToCreateModel(request, userID)
+	model := modelsdto.CreateCreditCardFromCreditCardRequest(request, userID)
 
 	creditCard, errs := c.repository.CreateCreditCard(ctx, model)
 
@@ -61,7 +61,7 @@ func (c creditCard) Create(ctx *gin.Context) (dtos.CreditCardResponse, int, []er
 		return dtos.CreditCardResponse{}, http.StatusInternalServerError, errs
 	}
 
-	return modelsdto.CreditCardToResponse(creditCard), http.StatusCreated, nil
+	return modelsdto.CreditCardResponseFromCreditCard(creditCard), http.StatusCreated, nil
 }
 
 func (c creditCard) Read(ctx *gin.Context) (models.ResponseList[dtos.CreditCardResponse], int, []errors.ApiError) {
@@ -79,7 +79,7 @@ func (c creditCard) Read(ctx *gin.Context) (models.ResponseList[dtos.CreditCardR
 
 	creditCardsResponse := make([]dtos.CreditCardResponse, 0, len(creditCards))
 	for _, creditCard := range creditCards {
-		creditCardsResponse = append(creditCardsResponse, modelsdto.CreditCardToResponse(creditCard))
+		creditCardsResponse = append(creditCardsResponse, modelsdto.CreditCardResponseFromCreditCard(creditCard))
 	}
 
 	return models.ResponseList[dtos.CreditCardResponse]{
@@ -90,7 +90,7 @@ func (c creditCard) Read(ctx *gin.Context) (models.ResponseList[dtos.CreditCardR
 
 func (c creditCard) ReadAt(ctx *gin.Context) (dtos.CreditCardResponse, int, []errors.ApiError) {
 	creditcard, status, err := c.read(ctx)
-	return modelsdto.CreditCardToResponse(creditcard), status, err
+	return modelsdto.CreditCardResponseFromCreditCard(creditcard), status, err
 }
 
 func (c creditCard) Update(ctx *gin.Context) (dtos.CreditCardResponse, int, []errors.ApiError) {
@@ -116,7 +116,7 @@ func (c creditCard) Update(ctx *gin.Context) (dtos.CreditCardResponse, int, []er
 
 	creditcard, err = c.repository.UpdateCreditCard(ctx, creditcard)
 
-	return modelsdto.CreditCardToResponse(creditcard), http.StatusOK, nil
+	return modelsdto.CreditCardResponseFromCreditCard(creditcard), http.StatusOK, nil
 }
 
 func (c creditCard) Delete(ctx *gin.Context) (int, []errors.ApiError) {

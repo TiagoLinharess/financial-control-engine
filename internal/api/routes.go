@@ -14,29 +14,29 @@ func (a *Api) RegisterRoutes() {
 
 	creditcards := api.Group("/creditcards")
 	{
-		creditcards.POST("/", a.creditCardController.Create)
-		creditcards.GET("/", a.creditCardController.Read)
-		creditcards.GET("/:id", a.creditCardController.ReadAt)
-		creditcards.PUT("/:id", a.creditCardController.Update)
-		creditcards.DELETE("/:id", a.creditCardController.Delete)
+		creditcards.POST("/", a.creditCardsHandler.Create)
+		creditcards.GET("/", a.creditCardsHandler.Read)
+		creditcards.GET("/:id", a.creditCardsHandler.ReadAt)
+		creditcards.PUT("/:id", a.creditCardsHandler.Update)
+		creditcards.DELETE("/:id", a.creditCardsHandler.Delete)
 	}
 
 	trasactions := api.Group("/transactions")
 	{
-		trasactions.POST("/", a.transactionsController.Create)
-		trasactions.GET("/", a.transactionsController.Read)
-		trasactions.GET("/:id", a.transactionsController.ReadById)
-		trasactions.PUT("/:id", a.transactionsController.Update)
-		trasactions.DELETE("/:id", a.transactionsController.Delete)
-		trasactions.PUT("/pay/:id", a.transactionsController.Pay)
+		trasactions.POST("/", a.transactionsHandler.Create)
+		trasactions.GET("/", a.transactionsHandler.Read)
+		trasactions.GET("/:id", a.transactionsHandler.ReadById)
+		trasactions.PUT("/:id", a.transactionsHandler.Update)
+		trasactions.DELETE("/:id", a.transactionsHandler.Delete)
+		trasactions.PUT("/pay/:id", a.transactionsHandler.Pay)
 	}
 
 	monthlyTransactions := api.Group("/monthly_transactions")
 	{
-		monthlyTransactions.POST("/", a.monthlyTransactionsController.Create)
-		monthlyTransactions.GET("/", a.monthlyTransactionsController.Read)
-		monthlyTransactions.GET("/:id", a.monthlyTransactionsController.ReadById)
-		monthlyTransactions.PUT("/:id", a.monthlyTransactionsController.Update)
-		monthlyTransactions.DELETE("/:id", a.monthlyTransactionsController.Delete)
+		monthlyTransactions.POST("/", a.monthlyTransactionsHandler.Create)
+		monthlyTransactions.GET("/", a.monthlyTransactionsHandler.Read)
+		monthlyTransactions.GET("/:id", a.monthlyTransactionsHandler.ReadById)
+		monthlyTransactions.PUT("/:id", a.monthlyTransactionsHandler.Update)
+		monthlyTransactions.DELETE("/:id", a.monthlyTransactionsHandler.Delete)
 	}
 }
