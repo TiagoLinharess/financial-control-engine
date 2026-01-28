@@ -1,25 +1,25 @@
 package services
 
 import (
+	"context"
+	"financialcontrol/internal/commonsmodels"
 	"financialcontrol/internal/constants"
 	"financialcontrol/internal/dtos"
 	"financialcontrol/internal/errors"
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/modelsdto"
 	"financialcontrol/internal/repositories"
-	"financialcontrol/internal/utils"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type Category interface {
-	Create(ctx *gin.Context) (dtos.CategoryResponse, int, []errors.ApiError)
-	Read(ctx *gin.Context) (models.ResponseList[dtos.CategoryResponse], int, []errors.ApiError)
-	ReadByID(ctx *gin.Context) (dtos.CategoryResponse, int, []errors.ApiError)
-	Update(ctx *gin.Context) (dtos.CategoryResponse, int, []errors.ApiError)
-	Delete(ctx *gin.Context) (int, []errors.ApiError)
+	Create(ctx context.Context, userID uuid.UUID, request dtos.CategoryRequest) (dtos.CategoryResponse, errors.ApiError)
+	Read(ctx context.Context, userID uuid.UUID) (commonsmodels.ResponseList[dtos.CategoryResponse], errors.ApiError)
+	ReadByID(ctx context.Context, userID uuid.UUID, id uuid.UUID) (dtos.CategoryResponse, errors.ApiError)
+	Update(ctx context.Context, userID uuid.UUID, id uuid.UUID, request dtos.CategoryRequest) (dtos.CategoryResponse, errors.ApiError)
+	Delete(ctx context.Context, userID uuid.UUID, id uuid.UUID) errors.ApiError
 }
 
 type category struct {
@@ -32,51 +32,45 @@ func NewCategoriesService(repository repositories.Category) Category {
 	}
 }
 
-func (c category) Create(ctx *gin.Context) (dtos.CategoryResponse, int, []errors.ApiError) {
-	userID, errs := utils.ReadUserIdFromCookie(ctx)
+func (c category) Create(ctx context.Context, userID uuid.UUID, request dtos.CategoryRequest) (dtos.CategoryResponse, errors.ApiError) {
+	count, err := c.repository.GetCategoryCountByUser(ctx, userID)
 
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, http.StatusUnauthorized, errs
-	}
-
-	count, errs := c.repository.GetCategoryCountByUser(ctx, userID)
-
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, http.StatusInternalServerError, errs
+	if err != nil {
+		return dtos.CategoryResponse{}, errors.NewApiError(
+			http.StatusInternalServerError,
+			errors.InternalServerError(err.Error()),
+		)
 	}
 
 	if count >= 10 {
-		return dtos.CategoryResponse{}, http.StatusForbidden, []errors.ApiError{errors.LimitError{Message: errors.CategoriesLimit}}
-	}
-
-	request, errs := utils.DecodeValidJson[dtos.CategoryRequest](ctx)
-
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, http.StatusBadRequest, errs
+		return dtos.CategoryResponse{}, errors.NewApiError(
+			http.StatusForbidden,
+			errors.BadRequestError(constants.LimitReachedMsg),
+		)
 	}
 
 	data := modelsdto.CreateCategoryFromRequest(request, userID)
 
-	category, errs := c.repository.CreateCategory(ctx, data)
+	category, err := c.repository.CreateCategory(ctx, data)
 
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, http.StatusInternalServerError, errs
+	if err != nil {
+		return dtos.CategoryResponse{}, errors.NewApiError(
+			http.StatusInternalServerError,
+			errors.InternalServerError(err.Error()),
+		)
 	}
 
-	return modelsdto.CategoryResponseFromModel(category), http.StatusCreated, nil
+	return modelsdto.CategoryResponseFromModel(category), nil
 }
 
-func (c category) Read(ctx *gin.Context) (models.ResponseList[dtos.CategoryResponse], int, []errors.ApiError) {
-	userID, errs := utils.ReadUserIdFromCookie(ctx)
+func (c category) Read(ctx context.Context, userID uuid.UUID) (commonsmodels.ResponseList[dtos.CategoryResponse], errors.ApiError) {
+	categories, err := c.repository.ReadCategories(ctx, userID)
 
-	if len(errs) > 0 {
-		return models.ResponseList[dtos.CategoryResponse]{}, http.StatusUnauthorized, errs
-	}
-
-	categories, errs := c.repository.ReadCategories(ctx, userID)
-
-	if len(errs) > 0 {
-		return models.ResponseList[dtos.CategoryResponse]{}, http.StatusInternalServerError, errs
+	if err != nil {
+		return commonsmodels.ResponseList[dtos.CategoryResponse]{}, errors.NewApiError(
+			http.StatusInternalServerError,
+			errors.InternalServerError(err.Error()),
+		)
 	}
 
 	response := make([]dtos.CategoryResponse, 0, len(categories))
@@ -84,101 +78,89 @@ func (c category) Read(ctx *gin.Context) (models.ResponseList[dtos.CategoryRespo
 		response = append(response, modelsdto.CategoryResponseFromModel(category))
 	}
 
-	return models.ResponseList[dtos.CategoryResponse]{Items: response, Total: len(response)}, http.StatusOK, nil
+	return commonsmodels.ResponseList[dtos.CategoryResponse]{Items: response, Total: len(response)}, nil
 }
 
-func (c category) ReadByID(ctx *gin.Context) (dtos.CategoryResponse, int, []errors.ApiError) {
-	category, statusCode, errs := c.read(ctx)
+func (c category) ReadByID(ctx context.Context, userID uuid.UUID, id uuid.UUID) (dtos.CategoryResponse, errors.ApiError) {
+	category, apiErr := c.read(ctx, userID, id)
 
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, statusCode, errs
+	if apiErr != nil {
+		return dtos.CategoryResponse{}, apiErr
 	}
 
-	return modelsdto.CategoryResponseFromModel(category), http.StatusOK, nil
+	return modelsdto.CategoryResponseFromModel(category), nil
 }
 
-func (c category) Update(ctx *gin.Context) (dtos.CategoryResponse, int, []errors.ApiError) {
-	category, statusCode, errs := c.read(ctx)
+func (c category) Update(ctx context.Context, userID uuid.UUID, id uuid.UUID, request dtos.CategoryRequest) (dtos.CategoryResponse, errors.ApiError) {
+	category, apiErr := c.read(ctx, userID, id)
 
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, statusCode, errs
-	}
-
-	request, errs := utils.DecodeValidJson[dtos.CategoryRequest](ctx)
-
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, http.StatusBadRequest, errs
+	if apiErr != nil {
+		return dtos.CategoryResponse{}, apiErr
 	}
 
 	category.Icon = request.Icon
 	category.Name = request.Name
 	category.TransactionType = *request.TransactionType
 
-	categoryEdited, errs := c.repository.UpdateCategory(ctx, category)
+	categoryEdited, err := c.repository.UpdateCategory(ctx, category)
 
-	if len(errs) > 0 {
-		return dtos.CategoryResponse{}, http.StatusInternalServerError, errs
+	if err != nil {
+		return dtos.CategoryResponse{}, errors.NewApiError(
+			http.StatusInternalServerError,
+			errors.InternalServerError(err.Error()),
+		)
 	}
 
-	return modelsdto.CategoryResponseFromModel(categoryEdited), http.StatusOK, nil
+	return modelsdto.CategoryResponseFromModel(categoryEdited), nil
 }
 
-func (c category) Delete(ctx *gin.Context) (int, []errors.ApiError) {
-	category, statusCode, errs := c.read(ctx)
-	if len(errs) > 0 {
-		return statusCode, errs
+func (c category) Delete(ctx context.Context, userID uuid.UUID, id uuid.UUID) errors.ApiError {
+	category, apiErr := c.read(ctx, userID, id)
+	if apiErr != nil {
+		return apiErr
 	}
 
-	hasTransactions, errs := c.repository.HasTransactionsByCategory(ctx, category.ID)
+	hasTransactions, err := c.repository.HasTransactionsByCategory(ctx, category.ID)
 
-	if len(errs) > 0 {
-		return http.StatusInternalServerError, errs
+	if err != nil {
+		return errors.NewApiError(
+			http.StatusInternalServerError,
+			errors.InternalServerError(err.Error()),
+		)
 	}
 
 	if hasTransactions {
-		return http.StatusBadRequest, []errors.ApiError{errors.CustomError{Message: constants.CategoryCannotBeDeletedMsg}}
+		return errors.NewApiError(
+			http.StatusBadRequest,
+			errors.BadRequestError(constants.CannotBeDeletedMsg),
+		)
 	}
 
-	errs = c.repository.DeleteCategory(ctx, category.ID)
-
-	if len(errs) > 0 {
-		return http.StatusInternalServerError, errs
-	}
-
-	return http.StatusNoContent, nil
-}
-
-func (c category) read(ctx *gin.Context) (models.Category, int, []errors.ApiError) {
-	categoryNotFoundErr := []errors.ApiError{errors.NotFoundError{Message: errors.CategoryNotFound}}
-	userID, errs := utils.ReadUserIdFromCookie(ctx)
-
-	if len(errs) > 0 {
-		return models.Category{}, http.StatusUnauthorized, errs
-	}
-
-	categoryIDString := ctx.Param(constants.ID)
-
-	categoryID, err := uuid.Parse(categoryIDString)
+	err = c.repository.DeleteCategory(ctx, category.ID)
 
 	if err != nil {
-		return models.Category{}, http.StatusBadRequest, errs
+		return errors.NewApiError(
+			http.StatusInternalServerError,
+			errors.InternalServerError(err.Error()),
+		)
 	}
 
-	category, errs := c.repository.ReadCategoryByID(ctx, categoryID)
+	return nil
+}
 
-	if len(errs) > 0 {
-		isNotFoundErr := utils.FindIf(errs, func(err errors.ApiError) bool {
-			return err.String() == constants.StoreErrorNoRowsMsg
-		})
-		if isNotFoundErr {
-			return models.Category{}, http.StatusNotFound, categoryNotFoundErr
+func (c category) read(ctx context.Context, userID uuid.UUID, id uuid.UUID) (models.Category, errors.ApiError) {
+	category, err := c.repository.ReadCategoryByID(ctx, id)
+
+	if err != nil {
+		if err.Error() == constants.StoreErrorNoRowsMsg {
+			return models.Category{}, errors.NewApiError(http.StatusNotFound, errors.NotFoundError())
 		}
-		return models.Category{}, http.StatusInternalServerError, errs
+		return models.Category{}, errors.NewApiError(http.StatusInternalServerError, errors.InternalServerError(err.Error()))
 	}
 
 	if category.UserID != userID {
-		return models.Category{}, http.StatusNotFound, categoryNotFoundErr
+		return models.Category{}, errors.NewApiError(http.StatusNotFound, errors.NotFoundError())
 	}
 
-	return category, http.StatusOK, nil
+	return category, nil
 }

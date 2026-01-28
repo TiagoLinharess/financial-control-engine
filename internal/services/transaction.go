@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/commonsmodels"
 	"financialcontrol/internal/constants"
 	"financialcontrol/internal/dtos"
 	"financialcontrol/internal/errors"
@@ -17,7 +18,7 @@ import (
 
 type Transaction interface {
 	Create(ctx *gin.Context) (dtos.TransactionResponse, int, []errors.ApiError)
-	Read(ctx *gin.Context) (models.PaginatedResponse[dtos.TransactionResponse], int, []errors.ApiError)
+	Read(ctx *gin.Context) (commonsmodels.PaginatedResponse[dtos.TransactionResponse], int, []errors.ApiError)
 	ReadById(ctx *gin.Context) (dtos.TransactionResponse, int, []errors.ApiError)
 	Update(ctx *gin.Context) (dtos.TransactionResponse, int, []errors.ApiError)
 	Delete(ctx *gin.Context) (int, []errors.ApiError)
@@ -54,11 +55,11 @@ func (t transaction) Create(ctx *gin.Context) (dtos.TransactionResponse, int, []
 	return response, http.StatusCreated, nil
 }
 
-func (t transaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.TransactionResponse], int, []errors.ApiError) {
+func (t transaction) Read(ctx *gin.Context) (commonsmodels.PaginatedResponse[dtos.TransactionResponse], int, []errors.ApiError) {
 	userID, errs := utils.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
-		return models.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusUnauthorized, errs
+		return commonsmodels.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusUnauthorized, errs
 	}
 
 	limitString := ctx.DefaultQuery(constants.LimitText, constants.LimitDefaultString)
@@ -71,7 +72,7 @@ func (t transaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.Trans
 	page, err := utils.StringToInt64(pageString)
 
 	if err != nil {
-		return models.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusBadRequest, []errors.ApiError{errors.CustomError{Message: constants.InvalidPageParam}}
+		return commonsmodels.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusBadRequest, []errors.ApiError{errors.CustomError{Message: constants.InvalidPageParam}}
 	}
 
 	if page == 0 {
@@ -90,10 +91,10 @@ func (t transaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.Trans
 		startDate, endDate, errs := t.readDatesFrom(startDateString, endDateString)
 
 		if len(errs) > 0 {
-			return models.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusBadRequest, errs
+			return commonsmodels.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusBadRequest, errs
 		}
 
-		paginatedParams := models.PaginatedParamsWithDateRange{
+		paginatedParams := commonsmodels.PaginatedParamsWithDateRange{
 			UserID:    userID,
 			Limit:     int32(limit),
 			Offset:    int32(offset),
@@ -103,7 +104,7 @@ func (t transaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.Trans
 
 		responses, count, errs = t.repository.ReadTransactionsInToDates(ctx, paginatedParams)
 	} else {
-		paginatedParams := models.PaginatedParams{
+		paginatedParams := commonsmodels.PaginatedParams{
 			UserID: userID,
 			Limit:  int32(limit),
 			Offset: int32(offset),
@@ -113,7 +114,7 @@ func (t transaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.Trans
 	}
 
 	if len(errs) > 0 {
-		return models.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusInternalServerError, errs
+		return commonsmodels.PaginatedResponse[dtos.TransactionResponse]{}, http.StatusInternalServerError, errs
 	}
 
 	transactionsResponse := make([]dtos.TransactionResponse, 0, len(responses))
@@ -122,7 +123,7 @@ func (t transaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.Trans
 		transactionsResponse = append(transactionsResponse, modelsdto.TransactionResponseFromTransaction(transaction))
 	}
 
-	return models.PaginatedResponse[dtos.TransactionResponse]{
+	return commonsmodels.PaginatedResponse[dtos.TransactionResponse]{
 		Items:     transactionsResponse,
 		PageCount: (count / limit) + 1,
 		Page:      page,

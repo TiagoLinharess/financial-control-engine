@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"financialcontrol/internal/errors"
+	"financialcontrol/internal/commonsmodels"
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/store/pgstore"
 	"financialcontrol/internal/utils"
@@ -13,19 +13,19 @@ import (
 )
 
 type Transaction interface {
-	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (models.Category, []errors.ApiError)
-	ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (models.CreditCard, []errors.ApiError)
-	CreateTransaction(context context.Context, transaction models.CreateTransaction) (models.ShortTransaction, []errors.ApiError)
-	ReadTransactions(context context.Context, params models.PaginatedParams) ([]models.Transaction, int64, []errors.ApiError)
-	ReadTransactionsInToDates(context context.Context, params models.PaginatedParamsWithDateRange) ([]models.Transaction, int64, []errors.ApiError)
-	ReadTransactionById(context context.Context, id uuid.UUID) (models.Transaction, []errors.ApiError)
-	UpdateTransaction(context context.Context, transaction models.Transaction) (models.ShortTransaction, []errors.ApiError)
-	DeleteTransaction(context context.Context, id uuid.UUID) []errors.ApiError
-	PayTransaction(context context.Context, id uuid.UUID, paid bool) []errors.ApiError
+	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (models.Category, error)
+	ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (models.CreditCard, error)
+	CreateTransaction(context context.Context, transaction models.CreateTransaction) (models.ShortTransaction, error)
+	ReadTransactions(context context.Context, params commonsmodels.PaginatedParams) ([]models.Transaction, int64, error)
+	ReadTransactionsInToDates(context context.Context, params commonsmodels.PaginatedParamsWithDateRange) ([]models.Transaction, int64, error)
+	ReadTransactionById(context context.Context, id uuid.UUID) (models.Transaction, error)
+	UpdateTransaction(context context.Context, transaction models.Transaction) (models.ShortTransaction, error)
+	DeleteTransaction(context context.Context, id uuid.UUID) error
+	PayTransaction(context context.Context, id uuid.UUID, paid bool) error
 	GetCreditcardTotalAmount(ctx context.Context, model models.TransactionsCreditCardTotal) (float64, error)
 }
 
-func (r Repository) CreateTransaction(context context.Context, transaction models.CreateTransaction) (models.ShortTransaction, []errors.ApiError) {
+func (r Repository) CreateTransaction(context context.Context, transaction models.CreateTransaction) (models.ShortTransaction, error) {
 	value := utils.Float64ToNumeric(transaction.Value)
 
 	param := pgstore.CreateTransactionParams{
@@ -44,7 +44,7 @@ func (r Repository) CreateTransaction(context context.Context, transaction model
 	createdTransaction, err := r.store.CreateTransaction(context, param)
 
 	if err != nil {
-		return models.ShortTransaction{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.ShortTransaction{}, err
 	}
 
 	return models.ShortTransaction{
@@ -58,7 +58,7 @@ func (r Repository) CreateTransaction(context context.Context, transaction model
 	}, nil
 }
 
-func (r Repository) ReadTransactions(context context.Context, params models.PaginatedParams) ([]models.Transaction, int64, []errors.ApiError) {
+func (r Repository) ReadTransactions(context context.Context, params commonsmodels.PaginatedParams) ([]models.Transaction, int64, error) {
 	args := pgstore.ListTransactionsByUserIDPaginatedParams{
 		UserID: params.UserID,
 		Limit:  params.Limit,
@@ -68,7 +68,7 @@ func (r Repository) ReadTransactions(context context.Context, params models.Pagi
 	transactions, err := r.store.ListTransactionsByUserIDPaginated(context, args)
 
 	if err != nil {
-		return []models.Transaction{}, 0, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return []models.Transaction{}, 0, err
 	}
 
 	if len(transactions) == 0 {
@@ -85,7 +85,7 @@ func (r Repository) ReadTransactions(context context.Context, params models.Pagi
 	return transactionModels, count, nil
 }
 
-func (r Repository) ReadTransactionsInToDates(context context.Context, params models.PaginatedParamsWithDateRange) ([]models.Transaction, int64, []errors.ApiError) {
+func (r Repository) ReadTransactionsInToDates(context context.Context, params commonsmodels.PaginatedParamsWithDateRange) ([]models.Transaction, int64, error) {
 	args := pgstore.ListTransactionsByUserAndDateParams{
 		UserID: params.UserID,
 		Limit:  params.Limit,
@@ -97,7 +97,7 @@ func (r Repository) ReadTransactionsInToDates(context context.Context, params mo
 	transactions, err := r.store.ListTransactionsByUserAndDate(context, args)
 
 	if err != nil {
-		return []models.Transaction{}, 0, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return []models.Transaction{}, 0, err
 	}
 
 	if len(transactions) == 0 {
@@ -114,17 +114,17 @@ func (r Repository) ReadTransactionsInToDates(context context.Context, params mo
 	return transactionModels, count, nil
 }
 
-func (r Repository) ReadTransactionById(context context.Context, id uuid.UUID) (models.Transaction, []errors.ApiError) {
+func (r Repository) ReadTransactionById(context context.Context, id uuid.UUID) (models.Transaction, error) {
 	transaction, err := r.store.GetTransactionByID(context, id)
 
 	if err != nil {
-		return models.Transaction{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.Transaction{}, err
 	}
 
 	return storeTransactionToTransaction(transaction), nil
 }
 
-func (r Repository) UpdateTransaction(context context.Context, transaction models.Transaction) (models.ShortTransaction, []errors.ApiError) {
+func (r Repository) UpdateTransaction(context context.Context, transaction models.Transaction) (models.ShortTransaction, error) {
 	value := utils.Float64ToNumeric(transaction.Value)
 	var creditCardID pgtype.UUID
 	if transaction.Creditcard != nil {
@@ -147,7 +147,7 @@ func (r Repository) UpdateTransaction(context context.Context, transaction model
 	transactionUpdated, err := r.store.UpdateTransaction(context, params)
 
 	if err != nil {
-		return models.ShortTransaction{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.ShortTransaction{}, err
 	}
 
 	return models.ShortTransaction{
@@ -161,17 +161,17 @@ func (r Repository) UpdateTransaction(context context.Context, transaction model
 	}, nil
 }
 
-func (r Repository) DeleteTransaction(context context.Context, id uuid.UUID) []errors.ApiError {
+func (r Repository) DeleteTransaction(context context.Context, id uuid.UUID) error {
 	err := r.store.DeleteTransaction(context, id)
 
 	if err != nil {
-		return []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return err
 	}
 
 	return nil
 }
 
-func (r Repository) PayTransaction(context context.Context, id uuid.UUID, paid bool) []errors.ApiError {
+func (r Repository) PayTransaction(context context.Context, id uuid.UUID, paid bool) error {
 	params := pgstore.PayTransactionParams{
 		ID:   id,
 		Paid: paid,
@@ -180,7 +180,7 @@ func (r Repository) PayTransaction(context context.Context, id uuid.UUID, paid b
 	err := r.store.PayTransaction(context, params)
 
 	if err != nil {
-		return []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return err
 	}
 
 	return nil

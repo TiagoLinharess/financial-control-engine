@@ -25,23 +25,23 @@ type MonthlyTransactionRequest struct {
 	CreditCardID string  `json:"credit_card_id"`
 }
 
-func (m MonthlyTransactionRequest) Validate() []errors.ApiError {
-	errs := make([]errors.ApiError, 0)
+func (m MonthlyTransactionRequest) Validate() []errors.ApiErrorItem {
+	errs := make([]errors.ApiErrorItem, 0)
 
 	if utils.IsBlank(m.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.MonthlyTransactionNameEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameEmptyMsg))
 	}
 
 	if len(m.Name) < 2 || len(m.Name) > 255 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.MonthlyTransactionNameInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameInvalidCharsCountMsg))
 	}
 
 	if m.Value < 0 || m.Value >= 1000000000000000.00 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.MonthlyTransactionValueInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.ValueInvalidMsg))
 	}
 
 	if m.Day < 1 || m.Day > 31 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.MonthlyTransactionDayInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.DayInvalidMsg))
 	}
 
 	return errs

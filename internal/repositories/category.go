@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"financialcontrol/internal/errors"
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/store/pgstore"
 
@@ -10,16 +9,16 @@ import (
 )
 
 type Category interface {
-	CreateCategory(context context.Context, data models.CreateCategory) (models.Category, []errors.ApiError)
-	ReadCategories(context context.Context, userID uuid.UUID) ([]models.Category, []errors.ApiError)
-	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (models.Category, []errors.ApiError)
-	GetCategoryCountByUser(context context.Context, userID uuid.UUID) (int64, []errors.ApiError)
-	UpdateCategory(context context.Context, category models.Category) (models.Category, []errors.ApiError)
-	DeleteCategory(context context.Context, categoryID uuid.UUID) []errors.ApiError
-	HasTransactionsByCategory(context context.Context, categoryID uuid.UUID) (bool, []errors.ApiError)
+	CreateCategory(context context.Context, data models.CreateCategory) (models.Category, error)
+	ReadCategories(context context.Context, userID uuid.UUID) ([]models.Category, error)
+	ReadCategoryByID(context context.Context, categoryID uuid.UUID) (models.Category, error)
+	GetCategoryCountByUser(context context.Context, userID uuid.UUID) (int64, error)
+	UpdateCategory(context context.Context, category models.Category) (models.Category, error)
+	DeleteCategory(context context.Context, categoryID uuid.UUID) error
+	HasTransactionsByCategory(context context.Context, categoryID uuid.UUID) (bool, error)
 }
 
-func (r Repository) CreateCategory(context context.Context, data models.CreateCategory) (models.Category, []errors.ApiError) {
+func (r Repository) CreateCategory(context context.Context, data models.CreateCategory) (models.Category, error) {
 	param := pgstore.CreateCategoryParams{
 		UserID:          data.UserID,
 		TransactionType: int32(data.TransactionType),
@@ -30,17 +29,17 @@ func (r Repository) CreateCategory(context context.Context, data models.CreateCa
 	category, err := r.store.CreateCategory(context, param)
 
 	if err != nil {
-		return models.Category{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.Category{}, err
 	}
 
 	return StoreCategoryModelToCategory(category), nil
 }
 
-func (r Repository) ReadCategories(context context.Context, userID uuid.UUID) ([]models.Category, []errors.ApiError) {
+func (r Repository) ReadCategories(context context.Context, userID uuid.UUID) ([]models.Category, error) {
 	rows, err := r.store.GetCategoriesByUserID(context, userID)
 
 	if err != nil {
-		return nil, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return nil, err
 	}
 
 	if len(rows) == 0 {
@@ -56,27 +55,27 @@ func (r Repository) ReadCategories(context context.Context, userID uuid.UUID) ([
 	return result, nil
 }
 
-func (r Repository) ReadCategoryByID(context context.Context, categoryID uuid.UUID) (models.Category, []errors.ApiError) {
+func (r Repository) ReadCategoryByID(context context.Context, categoryID uuid.UUID) (models.Category, error) {
 	category, err := r.store.GetCategoryByID(context, categoryID)
 
 	if err != nil {
-		return models.Category{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.Category{}, err
 	}
 
 	return StoreCategoryModelToCategory(category), nil
 }
 
-func (r Repository) GetCategoryCountByUser(context context.Context, userID uuid.UUID) (int64, []errors.ApiError) {
+func (r Repository) GetCategoryCountByUser(context context.Context, userID uuid.UUID) (int64, error) {
 	count, err := r.store.CountCategoriesByUserID(context, userID)
 
 	if err != nil {
-		return 0, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return 0, err
 	}
 
 	return count, nil
 }
 
-func (r Repository) UpdateCategory(context context.Context, category models.Category) (models.Category, []errors.ApiError) {
+func (r Repository) UpdateCategory(context context.Context, category models.Category) (models.Category, error) {
 	param := pgstore.UpdateCategoryParams{
 		ID:              category.ID,
 		Name:            category.Name,
@@ -87,26 +86,26 @@ func (r Repository) UpdateCategory(context context.Context, category models.Cate
 	updatedCategory, err := r.store.UpdateCategory(context, param)
 
 	if err != nil {
-		return models.Category{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.Category{}, err
 	}
 
 	return StoreCategoryModelToCategory(updatedCategory), nil
 }
 
-func (r Repository) DeleteCategory(context context.Context, categoryID uuid.UUID) []errors.ApiError {
+func (r Repository) DeleteCategory(context context.Context, categoryID uuid.UUID) error {
 	err := r.store.DeleteCategoryByID(context, categoryID)
 
 	if err != nil {
-		return []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return err
 	}
 	return nil
 }
 
-func (r Repository) HasTransactionsByCategory(context context.Context, categoryID uuid.UUID) (bool, []errors.ApiError) {
+func (r Repository) HasTransactionsByCategory(context context.Context, categoryID uuid.UUID) (bool, error) {
 	hasTransactions, err := r.store.HasTransactionsByCategory(context, categoryID)
 
 	if err != nil {
-		return false, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return false, err
 	}
 
 	return hasTransactions, nil

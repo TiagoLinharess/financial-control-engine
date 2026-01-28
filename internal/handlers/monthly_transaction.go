@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"financialcontrol/internal/models"
+	"financialcontrol/internal/commonsmodels"
 	"financialcontrol/internal/services"
 	"financialcontrol/internal/utils"
 
@@ -40,5 +40,5 @@ func (mc *MonthlyTransaction) Update(ctx *gin.Context) {
 
 func (mc *MonthlyTransaction) Delete(ctx *gin.Context) {
 	status, errs := mc.service.Delete(ctx)
-	utils.SendResponse(ctx, models.NewResponseSuccess(), status, errs)
+	utils.SendResponse(ctx, commonsmodels.NewResponseSuccess(), status, errs)
 }

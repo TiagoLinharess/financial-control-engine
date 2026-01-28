@@ -43,47 +43,47 @@ type CreditCardRequest struct {
 	TextColor        string  `json:"text_color"`
 }
 
-func (c CreditCardRequest) Validate() []errors.ApiError {
-	errs := make([]errors.ApiError, 0)
+func (c CreditCardRequest) Validate() []errors.ApiErrorItem {
+	errs := make([]errors.ApiErrorItem, 0)
 
 	if utils.IsBlank(c.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardNameEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameEmptyMsg))
 	}
 
 	if len(c.Name) >= 100 || len(c.Name) <= 2 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardNameInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameInvalidCharsCountMsg))
 	}
 
 	if len(c.FirstFourNumbers) != 4 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardFirstFourNumbersInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.FirstFourNumbersInvalidMsg))
 	}
 
 	if c.Limit <= 0 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardLimitInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.LimitInvalidMsg))
 	}
 
 	if c.CloseDay < 1 || c.CloseDay > 31 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardClosingDayInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.ClosingDayInvalidMsg))
 	}
 
 	if c.ExpireDay < 1 || c.ExpireDay > 31 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardExpireDayInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.ExpireDayInvalidMsg))
 	}
 
 	if utils.IsBlank(c.BackgroundColor) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardBackgroundColorEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.BackgroundColorEmptyMsg))
 	}
 
 	if len(c.BackgroundColor) != 7 && len(c.BackgroundColor) != 9 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardBackgroundColorInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.BackgroundColorInvalidCharsCountMsg))
 	}
 
 	if utils.IsBlank(c.TextColor) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardTextColorEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.TextColorEmptyMsg))
 	}
 
 	if len(c.TextColor) != 7 && len(c.TextColor) != 9 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CreditcardTextColorInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.TextColorInvalidCharsCountMsg))
 	}
 
 	return errs

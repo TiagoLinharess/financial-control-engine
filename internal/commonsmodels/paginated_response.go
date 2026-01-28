@@ -1,4 +1,4 @@
-package models
+package commonsmodels
 
 type PaginatedResponse[T any] struct {
 	Items     []T   `json:"items"`

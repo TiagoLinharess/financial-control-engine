@@ -6,14 +6,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SendResponse[T any](ctx *gin.Context, data T, status int, errs []errors.ApiError) {
-	var response interface{}
+func SendResponse[T any](ctx *gin.Context, data T, status int) {
+	// TODO: LOCAL FILE LOGS
+	ctx.JSON(status, data)
+}
 
-	if len(errs) > 0 {
-		response = errors.NewErrorResponse(errs)
-	} else {
-		response = data
+func SendErrorResponse(ctx *gin.Context, err errors.ApiError) {
+	var userMessages []string
+	for _, msg := range err.GetMessages() {
+		userMessages = append(userMessages, msg.UserMessage)
 	}
 
-	ctx.JSON(status, response)
+	response := errors.ErrorResponse{
+		Status:   err.GetStatus(),
+		Messages: userMessages,
+	}
+
+	// TODO: LOCAL FILE LOGS
+	ctx.AbortWithStatusJSON(err.GetStatus(), response)
 }

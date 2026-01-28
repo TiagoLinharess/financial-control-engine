@@ -1,7 +1,7 @@
-package models
+package validator
 
 import "financialcontrol/internal/errors"
 
 type Validator interface {
-	Validate() []errors.ApiError
+	Validate() []errors.ApiErrorItem
 }

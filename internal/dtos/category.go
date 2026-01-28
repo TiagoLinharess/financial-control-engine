@@ -32,28 +32,28 @@ type CategoryRequest struct {
 	Icon            string                  `json:"icon"`
 }
 
-func (c CategoryRequest) Validate() []errors.ApiError {
-	errs := make([]errors.ApiError, 0)
+func (c CategoryRequest) Validate() []errors.ApiErrorItem {
+	errs := make([]errors.ApiErrorItem, 0)
 	if c.TransactionType == nil {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryTransactionTypeEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.TransactionTypeEmptyMsg))
 	} else if !c.TransactionType.IsValid() {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryTransactionTypeMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.TransactionTypeMsg))
 	}
 
 	if utils.IsBlank(c.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryNameEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameEmptyMsg))
 	}
 
 	if len(c.Name) < 2 || len(c.Name) > 255 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryNameInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameInvalidCharsCountMsg))
 	}
 
 	if len(c.Icon) < 2 || len(c.Icon) > 255 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryIconInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.IconInvalidCharsCountMsg))
 	}
 
 	if utils.IsBlank(c.Icon) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.CategoryIconEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.IconEmptyMsg))
 	}
 
 	return errs

@@ -1,9 +1,11 @@
 package handlers
 
 import (
-	"financialcontrol/internal/models"
+	"financialcontrol/internal/commonsmodels"
+	"financialcontrol/internal/dtos"
 	"financialcontrol/internal/services"
 	"financialcontrol/internal/utils"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,27 +18,136 @@ func NewCategoriesHandler(service services.Category) *Category {
 	return &Category{service: service}
 }
 
-func (h *Category) Create(ctx *gin.Context) {
-	data, status, err := h.service.Create(ctx)
-	utils.SendResponse(ctx, data, status, err)
+func (h *Category) Create() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, apiErr := utils.GetUserIDFromContext(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		request, apiErr := utils.DecodeValidJson[dtos.CategoryRequest](ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		data, apiErr := h.service.Create(ctx.Request.Context(), userID, request)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		utils.SendResponse(ctx, data, http.StatusCreated)
+	}
 }
 
-func (h *Category) Read(ctx *gin.Context) {
-	data, status, err := h.service.Read(ctx)
-	utils.SendResponse(ctx, data, status, err)
+func (h *Category) Read() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, apiErr := utils.GetUserIDFromContext(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		data, apiErr := h.service.Read(ctx.Request.Context(), userID)
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		utils.SendResponse(ctx, data, http.StatusOK)
+	}
 }
 
-func (h *Category) ReadByID(ctx *gin.Context) {
-	data, status, err := h.service.ReadByID(ctx)
-	utils.SendResponse(ctx, data, status, err)
+func (h *Category) ReadByID() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, apiErr := utils.GetUserIDFromContext(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		id, apiErr := utils.IDFromURLParam(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		data, apiErr := h.service.ReadByID(ctx.Request.Context(), userID, id)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		utils.SendResponse(ctx, data, http.StatusOK)
+	}
 }
 
-func (h *Category) Update(ctx *gin.Context) {
-	data, status, err := h.service.Update(ctx)
-	utils.SendResponse(ctx, data, status, err)
+func (h *Category) Update() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, apiErr := utils.GetUserIDFromContext(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		id, apiErr := utils.IDFromURLParam(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		request, apiErr := utils.DecodeValidJson[dtos.CategoryRequest](ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		data, apiErr := h.service.Update(ctx.Request.Context(), userID, id, request)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		utils.SendResponse(ctx, data, http.StatusOK)
+	}
 }
 
-func (h *Category) Delete(ctx *gin.Context) {
-	status, err := h.service.Delete(ctx)
-	utils.SendResponse(ctx, models.NewResponseSuccess(), status, err)
+func (h *Category) Delete() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userID, apiErr := utils.GetUserIDFromContext(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		id, apiErr := utils.IDFromURLParam(ctx)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		apiErr = h.service.Delete(ctx, userID, id)
+
+		if apiErr != nil {
+			utils.SendErrorResponse(ctx, apiErr)
+			return
+		}
+
+		utils.SendResponse(ctx, commonsmodels.NewResponseSuccess(), http.StatusOK)
+	}
 }

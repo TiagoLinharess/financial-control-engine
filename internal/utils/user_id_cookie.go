@@ -3,23 +3,23 @@ package utils
 import (
 	"financialcontrol/internal/constants"
 	"financialcontrol/internal/errors"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func ReadUserIdFromCookie(ctx *gin.Context) (uuid.UUID, []errors.ApiError) {
-	userIDString, err := ctx.Cookie(constants.UserID)
-
-	if err != nil {
-		return uuid.UUID{}, []errors.ApiError{errors.UnauthorizedError{Message: errors.UserIDNotFound}}
+func GetUserIDFromContext(ctx *gin.Context) (uuid.UUID, errors.ApiError) {
+	userID, exists := ctx.Get(constants.UserID)
+	if !exists {
+		return uuid.UUID{}, errors.NewApiErrorWithErrors(http.StatusUnauthorized, []errors.ApiErrorItem{errors.UserIDInvalid("")})
 	}
 
-	userID, err := uuid.Parse(userIDString)
+	id, ok := userID.(uuid.UUID)
 
-	if err != nil {
-		return uuid.UUID{}, []errors.ApiError{errors.UnauthorizedError{Message: errors.UserIDInvalid}}
+	if !ok {
+		return uuid.UUID{}, errors.NewApiErrorWithErrors(http.StatusUnauthorized, []errors.ApiErrorItem{errors.UserIDInvalid("")})
 	}
 
-	return userID, nil
+	return id, nil
 }

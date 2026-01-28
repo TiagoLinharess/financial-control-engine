@@ -43,23 +43,23 @@ type TransactionRequest struct {
 	InstallmentTransactionsID *uuid.UUID `json:"installment_transactions_id,omitempty"`
 }
 
-func (t TransactionRequest) Validate() []errors.ApiError {
-	errs := make([]errors.ApiError, 0)
+func (t TransactionRequest) Validate() []errors.ApiErrorItem {
+	errs := make([]errors.ApiErrorItem, 0)
 
 	if utils.IsBlank(t.Name) {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionNameEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameEmptyMsg))
 	}
 
 	if len(t.Name) >= 255 || len(t.Name) <= 2 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionNameInvalidCharsCountMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.NameInvalidCharsCountMsg))
 	}
 
 	if t.Value < 0 || t.Value >= 1000000000000000.00 {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionAmountInvalidMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.ValueInvalidMsg))
 	}
 
 	if t.Date.IsZero() {
-		errs = append(errs, errors.InvalidFieldError{Message: constants.TransactionDateEmptyMsg})
+		errs = append(errs, errors.InvalidFieldError(constants.DateEmptyMsg))
 	}
 
 	return errs

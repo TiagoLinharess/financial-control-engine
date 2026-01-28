@@ -1,9 +1,9 @@
 package services
 
 import (
+	"financialcontrol/internal/commonsmodels"
 	"financialcontrol/internal/dtos"
 	"financialcontrol/internal/errors"
-	"financialcontrol/internal/models"
 	"financialcontrol/internal/modelsdto"
 	"financialcontrol/internal/repositories"
 	"financialcontrol/internal/utils"
@@ -14,7 +14,7 @@ import (
 
 type MonthlyTransaction interface {
 	Create(ctx *gin.Context) (dtos.MonthlyTransactionResponse, int, []errors.ApiError)
-	Read(ctx *gin.Context) (models.PaginatedResponse[dtos.MonthlyTransactionResponse], int, []errors.ApiError)
+	Read(ctx *gin.Context) (commonsmodels.PaginatedResponse[dtos.MonthlyTransactionResponse], int, []errors.ApiError)
 	ReadById(ctx *gin.Context) (dtos.MonthlyTransactionResponse, int, []errors.ApiError)
 	Update(ctx *gin.Context) (dtos.MonthlyTransactionResponse, int, []errors.ApiError)
 	Delete(ctx *gin.Context) (int, []errors.ApiError)
@@ -63,7 +63,7 @@ func (m *monthlyTransaction) Delete(ctx *gin.Context) (int, []errors.ApiError) {
 }
 
 // Read implements [MonthlyTransaction].
-func (m *monthlyTransaction) Read(ctx *gin.Context) (models.PaginatedResponse[dtos.MonthlyTransactionResponse], int, []errors.ApiError) {
+func (m *monthlyTransaction) Read(ctx *gin.Context) (commonsmodels.PaginatedResponse[dtos.MonthlyTransactionResponse], int, []errors.ApiError) {
 	panic("unimplemented")
 }
 

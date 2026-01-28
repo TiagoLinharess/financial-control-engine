@@ -22,85 +22,80 @@ const (
 	PageText           = "page"
 	PageDefaultString  = "1"
 	PageDefault        = 1
-	InvalidPageParam   = "invalid.page.param"
 	StartDateText      = "start_date"
 	EndDateText        = "end_date"
-	InvalidStartDate   = "invalid.start.date"
-	InvalidEndDate     = "invalid.end.date"
+)
+
+// STORE ERRORS
+const (
+	StoreErrorNoRowsMsg = "no rows in result set"
+)
+
+// ERRORS_USER_MESSAGES
+const (
+	UserUnauthorized           = "USER_UNAUTHORIZED"
+	InvalidStartDate           = "INVALID_START_DATE"
+	InvalidEndDate             = "INVALID_END_DATE"
+	TransactionTypeMsg         = "TRANSACTION_TYPE_INVALID"
+	TransactionTypeEmptyMsg    = "TRANSACTION_TYPE_EMPTY"
+	NameEmptyMsg               = "NAME_EMPTY"
+	IconEmptyMsg               = "ICON_EMPTY"
+	NameInvalidCharsCountMsg   = "NAME_INVALID_CHARS_COUNT"
+	IconInvalidCharsCountMsg   = "ICON_INVALID_CHARS_COUNT"
+	LimitReachedMsg            = "LIMIT_REACHED"
+	CannotBeDeletedMsg         = "CANNOT_BE_DELETED_BECAUSE_IT_HAS_ASSOCIATED_TRANSACTIONS"
+	NotFoundMsg                = "NOT_FOUND"
+	ValueInvalidMsg            = "VALUE_INVALID"
+	DateEmptyMsg               = "DATE_EMPTY_OR_INVALID"
+	DateInvalidMsg             = "DATE_INVALID"
+	CreditcardLimitExceededMsg = "CREDITCARD_LIMIT_EXCEEDED"
+	InvalidData                = "INVALID_DATA"
+	InvalidID                  = "INVALID_ID"
 )
 
 // ERRORS
 const (
-	StoreErrorNoRowsMsg        = "no rows in result set"
-	InternalServerErrorMsg     = "internal.server.error"
-	NilValueErrorMsg           = "nil.value"
-	UnsupportedTypeErrorMsg    = "unsupported.type"
-	DecodeJsonErrorMsg         = "decode.json.error"
-	EncodeJsonErrorMsg         = "encode.json.error"
-	DecodeJsonErrorSystemMsg   = "DecodeJsonError"
-	EncodeJsonErrorSystemMsg   = "EncodeJsonError"
-	InvalidFieldErrorSystemMsg = "InvalidFieldError"
-	LimitErrorSystemMsg        = "LimitError"
-	NotFoundErrorSystemMsg     = "NotFoundError"
-	StoreErrorSystemMsg        = "StoreError"
-	UnauthorizedErrorSystemMsg = "UnauthorizedError"
-	CustomError                = "CustomError"
+	UserIDNotFound       = "USER_ID_NOT_FOUND"
+	UserIDInvalid        = "USER_ID_INVALID"
+	InternalServerError  = "INTERNAL_SERVER_ERROR"
+	NilValueError        = "NIL_VALUE"
+	UnsupportedTypeError = "UNSUPPORTED_TYPE"
+	DecodeJsonError      = "DECODE_JSON_ERROR"
+	EncodeJsonError      = "ENCODE_JSON_ERROR"
+	InvalidFieldError    = "INVALID_FIELD_ERROR"
+	LimitError           = "LIMIT_ERROR"
+	NotFoundError        = "NOT_FOUND_ERROR"
+	StoreError           = "STORE_ERROR"
+	UnauthorizedError    = "UNAUTHORIZED_ERROR"
+	InvalidPageParam     = "INVALID_PAGE_PARAM"
+	CustomError          = "CUSTOM_ERROR"
+	BadRequestError      = "BAD_REQUEST_ERROR"
 )
 
 // USER
 const (
-	UserIDNotFoundMsg = "user_id.not.found"
-	UserIDInvalidMsg  = "user_id.invalid"
-	UserID            = "user_id"
-)
-
-// CATEGORIES
-const (
-	CategoryNotFoundMsg              = "category.not.found"
-	CategoryTransactionTypeMsg       = "category.transaction_type.invalid"
-	CategoryTransactionTypeEmptyMsg  = "category.transaction_type.empty"
-	CategoryNameEmptyMsg             = "category.name.empty"
-	CategoryIconEmptyMsg             = "category.icon.empty"
-	CategoryNameInvalidCharsCountMsg = "category.name.invalid.chars.count"
-	CategoryIconInvalidCharsCountMsg = "category.icon.invalid.chars.count"
-	CategoryCannotBeDeletedMsg       = "category.cannot.be.deleted"
-	CategoryLimitReachedMsg          = "category.limit.reached"
+	UserID = "user_id"
 )
 
 // CREDIT CARDS
 const (
-	CreditcardNotFoundMsg                         = "creditcard.not.found"
-	CreditcardNameEmptyMsg                        = "creditcard.name.empty"
-	CreditcardNameInvalidCharsCountMsg            = "creditcard.name.invalid.chars.count"
-	CreditcardFirstFourNumbersInvalidMsg          = "creditcard.first.four.numbers.invalid"
-	CreditcardLimitInvalidMsg                     = "creditcard.limit.invalid"
-	CreditcardClosingDayInvalidMsg                = "creditcard.closing.day.invalid"
-	CreditcardExpireDayInvalidMsg                 = "creditcard.expire.day.invalid"
-	CreditcardCannotBeDeletedMsg                  = "creditcard.cannot.be.deleted"
-	CreditcardBackgroundColorEmptyMsg             = "creditcard.background.color.empty"
-	CreditcardBackgroundColorInvalidCharsCountMsg = "creditcard.background.color.invalid.chars.count"
-	CreditcardTextColorEmptyMsg                   = "creditcard.text.color.empty"
-	CreditcardTextColorInvalidCharsCountMsg       = "creditcard.text.color.invalid.chars.count"
-	CreditcardLimitReachedMsg                     = "creditcard.limit.reached"
+	FirstFourNumbersInvalidMsg          = "FIRST_FOUR_NUMBERS_INVALID"
+	LimitInvalidMsg                     = "LIMIT_INVALID"
+	ClosingDayInvalidMsg                = "CLOSING_DAY_INVALID"
+	ExpireDayInvalidMsg                 = "EXPIRE_DAY_INVALID"
+	BackgroundColorEmptyMsg             = "BACKGROUND_COLOR_EMPTY"
+	BackgroundColorInvalidCharsCountMsg = "BACKGROUND_COLOR_INVALID_CHARS_COUNT"
+	TextColorEmptyMsg                   = "TEXT_COLOR_EMPTY"
+	TextColorInvalidCharsCountMsg       = "TEXT_COLOR_INVALID_CHARS_COUNT"
 )
 
 // TRANSACTIONS
 const (
-	TransactionNameEmptyMsg                   = "transaction.name.empty"
-	TransactionNameInvalidCharsCountMsg       = "transaction.name.invalid.chars.count"
-	TransactionNotFoundMsg                    = "transaction.not.found"
-	TransactionAmountInvalidMsg               = "transaction.amount.invalid"
-	TransactionDateEmptyMsg                   = "transaction.date.empty.or.invalid"
-	TransactionDateInvalidMsg                 = "transaction.date.invalid"
-	TransactionCreditWithoutCreditcardMsg     = "transaction.credit.without.creditcard"
-	TransactionDebitOrIncomeWithCreditcardMsg = "transaction.debit.or.income.with.creditcard"
-	TransactionCreditcardLimitExceededMsg     = "transaction.creditcard.limit.exceeded"
+	CreditWithoutCreditcardMsg     = "TRANSACTION_CREDIT_WITHOUT_CREDITCARD"
+	DebitOrIncomeWithCreditcardMsg = "TRANSACTION_DEBIT_OR_INCOME_WITH_CREDITCARD"
 )
 
 // MONTHLY TRANSACTIONS
 const (
-	MonthlyTransactionNameEmptyMsg             = "monthly.transaction.name.empty"
-	MonthlyTransactionNameInvalidCharsCountMsg = "monthly.transaction.name.invalid.chars.count"
-	MonthlyTransactionValueInvalidMsg          = "monthly.transaction.value.invalid"
-	MonthlyTransactionDayInvalidMsg            = "monthly.transaction.day.invalid"
+	DayInvalidMsg = "DAY_INVALID"
 )

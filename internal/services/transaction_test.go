@@ -10,12 +10,11 @@ import (
 	"testing"
 	"time"
 
-	m "financialcontrol/internal/models"
-	e "financialcontrol/internal/models/errors"
-	st "financialcontrol/internal/store/models"
-	cm "financialcontrol/internal/v1/categories/models"
-	crm "financialcontrol/internal/v1/creditcards/models"
-	tm "financialcontrol/internal/v1/transactions/models"
+	"financialcontrol/internal/commonsmodels"
+	"financialcontrol/internal/constants"
+	"financialcontrol/internal/dtos"
+	e "financialcontrol/internal/errors"
+	"financialcontrol/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -45,7 +44,7 @@ func setupTestContext(t *testing.T, method, path string, body interface{}) *gin.
 // ============= EXTRA TESTS MERGED FROM transactions_service_extra_test.go =============
 
 func TestGetRelationsInvalidJSON(t *testing.T) {
-	svc := TransactionsService{
+	svc := transaction{
 		repository: NewTransactionsRepositoryMock(),
 	}
 
@@ -71,7 +70,7 @@ func TestGetRelationsCategoryInternalError(t *testing.T) {
 	userID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test",
 		Date:       time.Now(),
 		Value:      10,
@@ -82,7 +81,7 @@ func TestGetRelationsCategoryInternalError(t *testing.T) {
 	mock := NewTransactionsRepositoryMock()
 	mock.CategoryError = errors.New("db error")
 
-	svc := TransactionsService{
+	svc := transaction{
 		repository: mock,
 	}
 
@@ -105,7 +104,7 @@ func TestGetRelationsCreditcardTotalAmountError(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test",
 		Date:         time.Now(),
 		Value:        100,
@@ -115,19 +114,19 @@ func TestGetRelationsCreditcardTotalAmountError(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 	}
-	mock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = models.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Limit:  10000,
 	}
 	mock.Error = errors.New("get total amount failed")
 
-	svc := TransactionsService{
+	svc := transaction{
 		repository: mock,
 	}
 
@@ -150,7 +149,7 @@ func TestGetRelationsDebitWithCreditcard(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test",
 		Date:         time.Now(),
 		Value:        100,
@@ -160,18 +159,18 @@ func TestGetRelationsDebitWithCreditcard(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 	}
-	mock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = models.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Limit:  10000,
 	}
 
-	svc := TransactionsService{
+	svc := transaction{
 		repository: mock,
 	}
 
@@ -190,7 +189,7 @@ func TestGetRelationsDebitWithCreditcard(t *testing.T) {
 }
 
 func TestReadInvalidUUID(t *testing.T) {
-	svc := TransactionsService{}
+	svc := transaction{}
 
 	ctx := getTestContextForGet(t, "/transactions/not-a-uuid")
 	setupContextWithCookie(ctx, uuid.New())
@@ -214,7 +213,7 @@ func TestReadRepositoryInternalError(t *testing.T) {
 	mock := NewTransactionsRepositoryMock()
 	mock.Error = errors.New("db error")
 
-	svc := TransactionsService{
+	svc := transaction{
 		repository: mock,
 	}
 
@@ -234,7 +233,7 @@ func TestReadRepositoryInternalError(t *testing.T) {
 }
 
 func TestReadDatesFromInvalidStart(t *testing.T) {
-	svc := TransactionsService{}
+	svc := transaction{}
 
 	_, _, errs := svc.readDatesFrom("invalid-date", "2021-01-01")
 
@@ -244,7 +243,7 @@ func TestReadDatesFromInvalidStart(t *testing.T) {
 }
 
 func TestReadDatesFromInvalidEnd(t *testing.T) {
-	svc := TransactionsService{}
+	svc := transaction{}
 
 	_, _, errs := svc.readDatesFrom("2021-01-01", "invalid-date")
 
@@ -256,14 +255,14 @@ func TestReadDatesFromInvalidEnd(t *testing.T) {
 func TestReadTransactionsLimitTooLarge(t *testing.T) {
 	userID := uuid.New()
 
-	transactions := []tm.Transaction{{
+	transactions := []models.Transaction{{
 		ID:        uuid.New(),
 		UserID:    userID,
 		Name:      "Tx",
 		Date:      time.Now(),
 		Value:     10,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: uuid.New(), Name: "Cat"},
+		Category:  models.ShortCategory{ID: uuid.New(), Name: "Cat"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}}
@@ -296,7 +295,7 @@ func TestReadTransactionsPageZero(t *testing.T) {
 	userID := uuid.New()
 
 	mock := NewTransactionsRepositoryMock()
-	mock.TransactionsResult = []tm.Transaction{}
+	mock.TransactionsResult = []models.Transaction{}
 	mock.TransactionsCount = 0
 
 	svc := NewTransactionsService(mock)
@@ -325,7 +324,7 @@ func TestUpdateTransactionWithCreditcard(t *testing.T) {
 	creditcardID := uuid.New()
 	transactionID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Updated",
 		Date:         time.Now(),
 		Value:        123,
@@ -335,10 +334,10 @@ func TestUpdateTransactionWithCreditcard(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Credit}
-	mock.CreditcardResult = crm.CreditCard{ID: creditcardID, UserID: userID, Limit: 10000}
-	mock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
-	mock.TransactionResult = tm.ShortTransaction{ID: transactionID}
+	mock.CategoryResult = models.Category{ID: categoryID, UserID: userID, TransactionType: models.Credit}
+	mock.CreditcardResult = models.CreditCard{ID: creditcardID, UserID: userID, Limit: 10000}
+	mock.TransactionFullResult = models.Transaction{ID: transactionID, UserID: userID}
+	mock.TransactionResult = models.ShortTransaction{ID: transactionID}
 
 	svc := NewTransactionsService(mock)
 
@@ -366,7 +365,7 @@ func TestUpdateTransactionUpdateError(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Updated",
 		Date:       time.Now(),
 		Value:      123,
@@ -375,8 +374,8 @@ func TestUpdateTransactionUpdateError(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{ID: categoryID, UserID: userID, TransactionType: m.Debit}
-	mock.TransactionFullResult = tm.Transaction{ID: transactionID, UserID: userID}
+	mock.CategoryResult = models.Category{ID: categoryID, UserID: userID, TransactionType: models.Debit}
+	mock.TransactionFullResult = models.Transaction{ID: transactionID, UserID: userID}
 	mock.UpdateError = errors.New("update failed")
 
 	svc := NewTransactionsService(mock)
@@ -425,13 +424,13 @@ type TransactionsRepositoryMock struct {
 	DeleteError           error
 	PayError              error
 	UpdateError           error
-	TransactionResult     tm.ShortTransaction
-	TransactionFullResult tm.Transaction
-	TransactionsResult    []tm.Transaction
+	TransactionResult     models.ShortTransaction
+	TransactionFullResult models.Transaction
+	TransactionsResult    []models.Transaction
 	TransactionsCount     int64
 	Amount                float64
-	CategoryResult        cm.Category
-	CreditcardResult      crm.CreditCard
+	CategoryResult        models.Category
+	CreditcardResult      models.CreditCard
 }
 
 func NewTransactionsRepositoryMock() *TransactionsRepositoryMock {
@@ -440,71 +439,71 @@ func NewTransactionsRepositoryMock() *TransactionsRepositoryMock {
 		CategoryError:         nil,
 		CreditcardError:       nil,
 		UpdateError:           nil,
-		TransactionResult:     tm.ShortTransaction{},
-		TransactionFullResult: tm.Transaction{},
-		TransactionsResult:    []tm.Transaction{},
+		TransactionResult:     models.ShortTransaction{},
+		TransactionFullResult: models.Transaction{},
+		TransactionsResult:    []models.Transaction{},
 		TransactionsCount:     0,
 		Amount:                0,
-		CategoryResult:        cm.Category{},
-		CreditcardResult:      crm.CreditCard{},
+		CategoryResult:        models.Category{},
+		CreditcardResult:      models.CreditCard{},
 	}
 }
 
-func (t *TransactionsRepositoryMock) ReadCategoryByID(ctx context.Context, categoryID uuid.UUID) (cm.Category, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadCategoryByID(ctx context.Context, categoryID uuid.UUID) (models.Category, []e.ApiError) {
 	if t.CategoryError != nil {
-		return cm.Category{}, []e.ApiError{e.CustomError{Message: t.CategoryError.Error()}}
+		return models.Category{}, []e.ApiError{e.CustomError{Message: t.CategoryError.Error()}}
 	}
 	return t.CategoryResult, nil
 }
 
-func (t *TransactionsRepositoryMock) ReadCreditCardByID(ctx context.Context, creditCardId uuid.UUID) (crm.CreditCard, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadCreditCardByID(ctx context.Context, creditCardId uuid.UUID) (models.CreditCard, []e.ApiError) {
 	if t.CreditcardError != nil {
-		return crm.CreditCard{}, []e.ApiError{e.CustomError{Message: t.CreditcardError.Error()}}
+		return models.CreditCard{}, []e.ApiError{e.CustomError{Message: t.CreditcardError.Error()}}
 	}
 	return t.CreditcardResult, nil
 }
 
-func (t *TransactionsRepositoryMock) GetCreditcardTotalAmount(ctx context.Context, model tm.TransactionsCreditCardTotal) (float64, error) {
+func (t *TransactionsRepositoryMock) GetCreditcardTotalAmount(ctx context.Context, model models.TransactionsCreditCardTotal) (float64, error) {
 	if t.Error != nil {
 		return 0, t.Error
 	}
 	return t.Amount, nil
 }
 
-func (t *TransactionsRepositoryMock) CreateTransaction(ctx context.Context, transaction tm.CreateTransaction) (tm.ShortTransaction, []e.ApiError) {
+func (t *TransactionsRepositoryMock) CreateTransaction(ctx context.Context, transaction models.CreateTransaction) (models.ShortTransaction, []e.ApiError) {
 	if t.Error != nil {
-		return tm.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
+		return models.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionResult, nil
 }
 
-func (t *TransactionsRepositoryMock) ReadTransactions(ctx context.Context, params m.PaginatedParams) ([]tm.Transaction, int64, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadTransactions(ctx context.Context, params commonsmodels.PaginatedParams) ([]models.Transaction, int64, []e.ApiError) {
 	if t.Error != nil {
-		return []tm.Transaction{}, 0, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
+		return []models.Transaction{}, 0, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionsResult, t.TransactionsCount, nil
 }
 
-func (t *TransactionsRepositoryMock) ReadTransactionsInToDates(ctx context.Context, params m.PaginatedParamsWithDateRange) ([]tm.Transaction, int64, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadTransactionsInToDates(ctx context.Context, params commonsmodels.PaginatedParamsWithDateRange) ([]models.Transaction, int64, []e.ApiError) {
 	if t.Error != nil {
-		return []tm.Transaction{}, 0, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
+		return []models.Transaction{}, 0, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionsResult, t.TransactionsCount, nil
 }
 
-func (t *TransactionsRepositoryMock) ReadTransactionById(ctx context.Context, id uuid.UUID) (tm.Transaction, []e.ApiError) {
+func (t *TransactionsRepositoryMock) ReadTransactionById(ctx context.Context, id uuid.UUID) (models.Transaction, []e.ApiError) {
 	if t.Error != nil {
-		return tm.Transaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
+		return models.Transaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionFullResult, nil
 }
 
-func (t *TransactionsRepositoryMock) UpdateTransaction(ctx context.Context, transaction tm.Transaction) (tm.ShortTransaction, []e.ApiError) {
+func (t *TransactionsRepositoryMock) UpdateTransaction(ctx context.Context, transaction models.Transaction) (models.ShortTransaction, []e.ApiError) {
 	if t.UpdateError != nil {
-		return tm.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.UpdateError.Error()}}
+		return models.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.UpdateError.Error()}}
 	}
 	if t.Error != nil {
-		return tm.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
+		return models.ShortTransaction{}, []e.ApiError{e.CustomError{Message: t.Error.Error()}}
 	}
 	return t.TransactionResult, nil
 }
@@ -552,7 +551,7 @@ func TestCreateTransactionSuccess(t *testing.T) {
 	categoryID := uuid.New()
 	transactionID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -561,16 +560,16 @@ func TestCreateTransactionSuccess(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-	mock.TransactionResult = tm.ShortTransaction{
+	mock.TransactionResult = models.ShortTransaction{
 		ID:        transactionID,
 		Name:      request.Name,
 		Date:      request.Date,
@@ -601,7 +600,7 @@ func TestCreateTransactionSuccess(t *testing.T) {
 }
 
 func TestCreateTransactionMissingUserCookie(t *testing.T) {
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -630,7 +629,7 @@ func TestCreateTransactionCategoryNotFound(t *testing.T) {
 	userID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -639,7 +638,7 @@ func TestCreateTransactionCategoryNotFound(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryError = errors.New(string(st.ErrNoRows))
+	mock.CategoryError = errors.New(string(constants.StoreErrorNoRowsMsg))
 
 	service := NewTransactionsService(mock)
 
@@ -661,7 +660,7 @@ func TestCreateTransactionCreditRequiresCreditcard(t *testing.T) {
 	userID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -670,10 +669,10 @@ func TestCreateTransactionCreditRequiresCreditcard(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 		Name:            "Credit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -697,7 +696,7 @@ func TestCreateTransactionDebitCannotHaveCreditcard(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test Transaction",
 		Date:         time.Now(),
 		Value:        100.00,
@@ -707,16 +706,16 @@ func TestCreateTransactionDebitCannotHaveCreditcard(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Debit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-	mock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = models.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Name:   "Test Card",
@@ -740,7 +739,7 @@ func TestCreateTransactionWithValidCreditcard(t *testing.T) {
 	creditcardID := uuid.New()
 	transactionID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test Transaction",
 		Date:         time.Now(),
 		Value:        100.00,
@@ -750,22 +749,22 @@ func TestCreateTransactionWithValidCreditcard(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 		Name:            "Credit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-	mock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = models.CreditCard{
 		ID:     creditcardID,
 		UserID: userID,
 		Name:   "Test Card",
 		Limit:  10000,
 	}
-	mock.TransactionResult = tm.ShortTransaction{
+	mock.TransactionResult = models.ShortTransaction{
 		ID:        transactionID,
 		Name:      request.Name,
 		Date:      request.Date,
@@ -803,7 +802,7 @@ func TestReadTransactionsSuccess(t *testing.T) {
 	transactionID1 := uuid.New()
 	transactionID2 := uuid.New()
 
-	transactions := []tm.Transaction{
+	transactions := []models.Transaction{
 		{
 			ID:        transactionID1,
 			UserID:    userID,
@@ -811,7 +810,7 @@ func TestReadTransactionsSuccess(t *testing.T) {
 			Date:      time.Now(),
 			Value:     100.00,
 			Paid:      false,
-			Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+			Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -822,7 +821,7 @@ func TestReadTransactionsSuccess(t *testing.T) {
 			Date:      time.Now(),
 			Value:     200.00,
 			Paid:      true,
-			Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+			Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
@@ -895,7 +894,7 @@ func TestReadTransactionsWithDateRange(t *testing.T) {
 	userID := uuid.New()
 	now := time.Now()
 
-	transactions := []tm.Transaction{
+	transactions := []models.Transaction{
 		{
 			ID:        uuid.New(),
 			UserID:    userID,
@@ -903,7 +902,7 @@ func TestReadTransactionsWithDateRange(t *testing.T) {
 			Date:      now,
 			Value:     100.00,
 			Paid:      false,
-			Category:  cm.ShortCategory{ID: uuid.New(), Name: "Category"},
+			Category:  models.ShortCategory{ID: uuid.New(), Name: "Category"},
 			CreatedAt: now,
 			UpdatedAt: now,
 		},
@@ -942,14 +941,14 @@ func TestReadByIdTransactionSuccess(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    userID,
 		Name:      "Test Transaction",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -983,7 +982,7 @@ func TestReadByIdTransactionNotFound(t *testing.T) {
 	transactionID := uuid.New()
 
 	mock := NewTransactionsRepositoryMock()
-	mock.Error = errors.New(string(st.ErrNoRows))
+	mock.Error = errors.New(string(constants.StoreErrorNoRowsMsg))
 
 	service := NewTransactionsService(mock)
 
@@ -1009,7 +1008,7 @@ func TestUpdateTransactionSuccess(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Updated Transaction",
 		Date:       time.Now(),
 		Value:      200.00,
@@ -1017,30 +1016,30 @@ func TestUpdateTransactionSuccess(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	originalTransaction := tm.Transaction{
+	originalTransaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    userID,
 		Name:      "Original Transaction",
 		Date:      time.Now().AddDate(0, 0, -1),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
 	mock.TransactionFullResult = originalTransaction
-	mock.TransactionResult = tm.ShortTransaction{
+	mock.TransactionResult = models.ShortTransaction{
 		ID:        transactionID,
 		Name:      request.Name,
 		Date:      request.Date,
@@ -1076,7 +1075,7 @@ func TestUpdateTransactionNotFound(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Updated Transaction",
 		Date:       time.Now(),
 		Value:      200.00,
@@ -1085,16 +1084,16 @@ func TestUpdateTransactionNotFound(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-	mock.Error = errors.New(string(st.ErrNoRows))
+	mock.Error = errors.New(string(constants.StoreErrorNoRowsMsg))
 
 	service := NewTransactionsService(mock)
 
@@ -1120,14 +1119,14 @@ func TestDeleteTransactionSuccess(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    userID,
 		Name:      "Test Transaction",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -1157,7 +1156,7 @@ func TestDeleteTransactionNotFound(t *testing.T) {
 	transactionID := uuid.New()
 
 	mock := NewTransactionsRepositoryMock()
-	mock.Error = errors.New(string(st.ErrNoRows))
+	mock.Error = errors.New(string(constants.StoreErrorNoRowsMsg))
 
 	service := NewTransactionsService(mock)
 
@@ -1183,14 +1182,14 @@ func TestPayTransactionSuccess(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    userID,
 		Name:      "Test Transaction",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -1220,7 +1219,7 @@ func TestPayTransactionNotFound(t *testing.T) {
 	transactionID := uuid.New()
 
 	mock := NewTransactionsRepositoryMock()
-	mock.Error = errors.New(string(st.ErrNoRows))
+	mock.Error = errors.New(string(constants.StoreErrorNoRowsMsg))
 
 	service := NewTransactionsService(mock)
 
@@ -1244,14 +1243,14 @@ func TestPayTransactionToggleStatus(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    userID,
 		Name:      "Test Transaction",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      true,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -1282,7 +1281,7 @@ func TestCreateTransactionRepositoryError(t *testing.T) {
 	userID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -1291,10 +1290,10 @@ func TestCreateTransactionRepositoryError(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -1348,7 +1347,7 @@ func TestCreateTransactionCategoryRepositoryError(t *testing.T) {
 	userID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -1380,7 +1379,7 @@ func TestCreateTransactionCreditcardRepositoryError(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test Transaction",
 		Date:         time.Now(),
 		Value:        100.00,
@@ -1390,10 +1389,10 @@ func TestCreateTransactionCreditcardRepositoryError(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 		Name:            "Credit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -1443,7 +1442,7 @@ func TestUpdateTransactionRepositoryError(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Updated Transaction",
 		Date:       time.Now(),
 		Value:      200.00,
@@ -1451,23 +1450,23 @@ func TestUpdateTransactionRepositoryError(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	originalTransaction := tm.Transaction{
+	originalTransaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    userID,
 		Name:      "Original",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -1543,7 +1542,7 @@ func TestCreateTransactionWrongCategoryUser(t *testing.T) {
 	otherUserID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Test Transaction",
 		Date:       time.Now(),
 		Value:      100.00,
@@ -1552,10 +1551,10 @@ func TestCreateTransactionWrongCategoryUser(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          otherUserID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -1584,7 +1583,7 @@ func TestCreateTransactionWrongCreditcardUser(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test Transaction",
 		Date:         time.Now(),
 		Value:        100.00,
@@ -1594,16 +1593,16 @@ func TestCreateTransactionWrongCreditcardUser(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 		Name:            "Credit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-	mock.CreditcardResult = crm.CreditCard{
+	mock.CreditcardResult = models.CreditCard{
 		ID:     creditcardID,
 		UserID: otherUserID,
 		Name:   "Test Card",
@@ -1631,7 +1630,7 @@ func TestUpdateTransactionWrongUser(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Updated",
 		Date:       time.Now(),
 		Value:      200.00,
@@ -1639,23 +1638,23 @@ func TestUpdateTransactionWrongUser(t *testing.T) {
 		CategoryID: categoryID,
 	}
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    otherUserID,
 		Name:      "Original",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Debit,
+		TransactionType: models.Debit,
 		Name:            "Test Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -1686,14 +1685,14 @@ func TestDeleteTransactionWrongUser(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    otherUserID,
 		Name:      "Test",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -1724,14 +1723,14 @@ func TestPayTransactionWrongUser(t *testing.T) {
 	transactionID := uuid.New()
 	categoryID := uuid.New()
 
-	transaction := tm.Transaction{
+	transaction := models.Transaction{
 		ID:        transactionID,
 		UserID:    otherUserID,
 		Name:      "Test",
 		Date:      time.Now(),
 		Value:     100.00,
 		Paid:      false,
-		Category:  cm.ShortCategory{ID: categoryID, Name: "Category"},
+		Category:  models.ShortCategory{ID: categoryID, Name: "Category"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -1828,7 +1827,7 @@ func TestPayTransactionMissingUserCookie(t *testing.T) {
 func TestUpdateTransactionMissingUserCookie(t *testing.T) {
 	transactionID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:       "Updated",
 		Date:       time.Now(),
 		Value:      200.00,
@@ -1859,7 +1858,7 @@ func TestReadCreditcardError(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test Transaction",
 		Date:         time.Now(),
 		Value:        100.00,
@@ -1869,10 +1868,10 @@ func TestReadCreditcardError(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 		Name:            "Credit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
@@ -1901,7 +1900,7 @@ func TestCreateTransactionReadCreditcardNotFound(t *testing.T) {
 	categoryID := uuid.New()
 	creditcardID := uuid.New()
 
-	request := tm.TransactionRequest{
+	request := dtos.TransactionRequest{
 		Name:         "Test Transaction",
 		Date:         time.Now(),
 		Value:        100.00,
@@ -1911,16 +1910,16 @@ func TestCreateTransactionReadCreditcardNotFound(t *testing.T) {
 	}
 
 	mock := NewTransactionsRepositoryMock()
-	mock.CategoryResult = cm.Category{
+	mock.CategoryResult = models.Category{
 		ID:              categoryID,
 		UserID:          userID,
-		TransactionType: m.Credit,
+		TransactionType: models.Credit,
 		Name:            "Credit Category",
 		Icon:            "icon",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
-	mock.CreditcardError = errors.New(string(st.ErrNoRows))
+	mock.CreditcardError = errors.New(string(constants.StoreErrorNoRowsMsg))
 
 	service := NewTransactionsService(mock)
 
@@ -1943,7 +1942,7 @@ func TestDeleteTransactionRepositoryError(t *testing.T) {
 	transactionID := uuid.New()
 
 	mock := NewTransactionsRepositoryMock()
-	mock.TransactionFullResult = tm.Transaction{
+	mock.TransactionFullResult = models.Transaction{
 		ID:     transactionID,
 		UserID: userID,
 	}
@@ -1971,7 +1970,7 @@ func TestPayTransactionRepositoryError(t *testing.T) {
 	transactionID := uuid.New()
 
 	mock := NewTransactionsRepositoryMock()
-	mock.TransactionFullResult = tm.Transaction{
+	mock.TransactionFullResult = models.Transaction{
 		ID:     transactionID,
 		UserID: userID,
 	}

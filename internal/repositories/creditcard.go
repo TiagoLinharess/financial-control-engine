@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"financialcontrol/internal/errors"
 	"financialcontrol/internal/models"
 	"financialcontrol/internal/store/pgstore"
 	"financialcontrol/internal/utils"
@@ -11,16 +10,16 @@ import (
 )
 
 type CreditCard interface {
-	CreateCreditCard(context context.Context, creditCard models.CreateCreditCard) (models.CreditCard, []errors.ApiError)
-	ReadCreditCards(context context.Context, userId uuid.UUID) ([]models.CreditCard, []errors.ApiError)
-	ReadCountByUser(context context.Context, userId uuid.UUID) (int, []errors.ApiError)
-	ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (models.CreditCard, []errors.ApiError)
-	UpdateCreditCard(context context.Context, creditCard models.CreditCard) (models.CreditCard, []errors.ApiError)
-	DeleteCreditCard(context context.Context, creditCardId uuid.UUID) []errors.ApiError
-	HasTransactionsByCreditCard(context context.Context, creditCardID uuid.UUID) (bool, []errors.ApiError)
+	CreateCreditCard(context context.Context, creditCard models.CreateCreditCard) (models.CreditCard, error)
+	ReadCreditCards(context context.Context, userId uuid.UUID) ([]models.CreditCard, error)
+	ReadCountByUser(context context.Context, userId uuid.UUID) (int, error)
+	ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (models.CreditCard, error)
+	UpdateCreditCard(context context.Context, creditCard models.CreditCard) (models.CreditCard, error)
+	DeleteCreditCard(context context.Context, creditCardId uuid.UUID) error
+	HasTransactionsByCreditCard(context context.Context, creditCardID uuid.UUID) (bool, error)
 }
 
-func (r Repository) CreateCreditCard(context context.Context, creditCard models.CreateCreditCard) (models.CreditCard, []errors.ApiError) {
+func (r Repository) CreateCreditCard(context context.Context, creditCard models.CreateCreditCard) (models.CreditCard, error) {
 	param := pgstore.CreateCreditCardParams{
 		UserID:           creditCard.UserID,
 		Name:             creditCard.Name,
@@ -35,17 +34,17 @@ func (r Repository) CreateCreditCard(context context.Context, creditCard models.
 	createdCreditCard, err := r.store.CreateCreditCard(context, param)
 
 	if err != nil {
-		return models.CreditCard{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.CreditCard{}, err
 	}
 
 	return storeCreditcardToCreditcard(createdCreditCard), nil
 }
 
-func (r Repository) ReadCreditCards(context context.Context, userId uuid.UUID) ([]models.CreditCard, []errors.ApiError) {
+func (r Repository) ReadCreditCards(context context.Context, userId uuid.UUID) ([]models.CreditCard, error) {
 	creditCards, err := r.store.ListCreditCards(context, userId)
 
 	if err != nil {
-		return nil, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return nil, err
 	}
 
 	if len(creditCards) == 0 {
@@ -61,27 +60,27 @@ func (r Repository) ReadCreditCards(context context.Context, userId uuid.UUID) (
 	return creditCardsResponse, nil
 }
 
-func (r Repository) ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (models.CreditCard, []errors.ApiError) {
+func (r Repository) ReadCreditCardByID(context context.Context, creditCardId uuid.UUID) (models.CreditCard, error) {
 	creditCard, err := r.store.GetCreditCardByID(context, creditCardId)
 
 	if err != nil {
-		return models.CreditCard{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.CreditCard{}, err
 	}
 
 	return storeCreditcardToCreditcard(creditCard), nil
 }
 
-func (r Repository) ReadCountByUser(context context.Context, userId uuid.UUID) (int, []errors.ApiError) {
+func (r Repository) ReadCountByUser(context context.Context, userId uuid.UUID) (int, error) {
 	count, err := r.store.CountCreditCardsByUserID(context, userId)
 
 	if err != nil {
-		return 0, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return 0, err
 	}
 
 	return int(count), nil
 }
 
-func (r Repository) UpdateCreditCard(context context.Context, creditCard models.CreditCard) (models.CreditCard, []errors.ApiError) {
+func (r Repository) UpdateCreditCard(context context.Context, creditCard models.CreditCard) (models.CreditCard, error) {
 	param := pgstore.UpdateCreditCardParams{
 		ID:               creditCard.ID,
 		Name:             creditCard.Name,
@@ -96,27 +95,27 @@ func (r Repository) UpdateCreditCard(context context.Context, creditCard models.
 	updatedCreditCard, err := r.store.UpdateCreditCard(context, param)
 
 	if err != nil {
-		return models.CreditCard{}, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return models.CreditCard{}, err
 	}
 
 	return storeCreditcardToCreditcard(updatedCreditCard), nil
 }
 
-func (r Repository) DeleteCreditCard(context context.Context, creditCardId uuid.UUID) []errors.ApiError {
+func (r Repository) DeleteCreditCard(context context.Context, creditCardId uuid.UUID) error {
 	err := r.store.DeleteCreditCard(context, creditCardId)
 
 	if err != nil {
-		return []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return err
 	}
 
 	return nil
 }
 
-func (r Repository) HasTransactionsByCreditCard(context context.Context, creditCardID uuid.UUID) (bool, []errors.ApiError) {
+func (r Repository) HasTransactionsByCreditCard(context context.Context, creditCardID uuid.UUID) (bool, error) {
 	hasTransactions, err := r.store.HasTransactionsByCreditCard(context, utils.UUIDToPgTypeUUID(&creditCardID))
 
 	if err != nil {
-		return false, []errors.ApiError{errors.StoreError{Message: err.Error()}}
+		return false, err
 	}
 
 	return hasTransactions, nil

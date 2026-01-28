@@ -1,6 +1,7 @@
 package services
 
 import (
+	"financialcontrol/internal/commonsmodels"
 	"financialcontrol/internal/constants"
 	"financialcontrol/internal/dtos"
 	"financialcontrol/internal/errors"
@@ -16,7 +17,7 @@ import (
 
 type CreditCard interface {
 	Create(ctx *gin.Context) (dtos.CreditCardResponse, int, []errors.ApiError)
-	Read(ctx *gin.Context) (models.ResponseList[dtos.CreditCardResponse], int, []errors.ApiError)
+	Read(ctx *gin.Context) (commonsmodels.ResponseList[dtos.CreditCardResponse], int, []errors.ApiError)
 	ReadAt(ctx *gin.Context) (dtos.CreditCardResponse, int, []errors.ApiError)
 	Update(ctx *gin.Context) (dtos.CreditCardResponse, int, []errors.ApiError)
 	Delete(ctx *gin.Context) (int, []errors.ApiError)
@@ -64,17 +65,17 @@ func (c creditCard) Create(ctx *gin.Context) (dtos.CreditCardResponse, int, []er
 	return modelsdto.CreditCardResponseFromCreditCard(creditCard), http.StatusCreated, nil
 }
 
-func (c creditCard) Read(ctx *gin.Context) (models.ResponseList[dtos.CreditCardResponse], int, []errors.ApiError) {
+func (c creditCard) Read(ctx *gin.Context) (commonsmodels.ResponseList[dtos.CreditCardResponse], int, []errors.ApiError) {
 	userID, errs := utils.ReadUserIdFromCookie(ctx)
 
 	if len(errs) > 0 {
-		return models.ResponseList[dtos.CreditCardResponse]{}, http.StatusUnauthorized, errs
+		return commonsmodels.ResponseList[dtos.CreditCardResponse]{}, http.StatusUnauthorized, errs
 	}
 
 	creditCards, errs := c.repository.ReadCreditCards(ctx, userID)
 
 	if len(errs) > 0 {
-		return models.ResponseList[dtos.CreditCardResponse]{}, http.StatusInternalServerError, errs
+		return commonsmodels.ResponseList[dtos.CreditCardResponse]{}, http.StatusInternalServerError, errs
 	}
 
 	creditCardsResponse := make([]dtos.CreditCardResponse, 0, len(creditCards))
@@ -82,7 +83,7 @@ func (c creditCard) Read(ctx *gin.Context) (models.ResponseList[dtos.CreditCardR
 		creditCardsResponse = append(creditCardsResponse, modelsdto.CreditCardResponseFromCreditCard(creditCard))
 	}
 
-	return models.ResponseList[dtos.CreditCardResponse]{
+	return commonsmodels.ResponseList[dtos.CreditCardResponse]{
 		Items: creditCardsResponse,
 		Total: len(creditCardsResponse),
 	}, http.StatusOK, nil
